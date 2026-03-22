@@ -1,5 +1,6 @@
 import type { Skill } from '@/lib/types';
 import SkillCard from './SkillCard';
+import AdBanner from './AdBanner';
 
 interface Props {
   choices: Skill[];
@@ -20,9 +21,8 @@ export default function SkillSelect({ choices, onSelect, floor }: Props) {
           <SkillCard key={skill.id} skill={skill} onClick={() => onSelect(skill)} />
         ))}
       </div>
-      {/* 広告プレースホルダー */}
-      <div className="w-full max-w-xs h-16 bg-gray-800 border border-dashed border-gray-600 rounded-xl flex items-center justify-center">
-        <span className="text-xs text-gray-600">広告枠</span>
+      <div className="w-full max-w-xs">
+        <AdBanner />
       </div>
     </div>
   );

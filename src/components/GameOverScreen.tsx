@@ -1,6 +1,7 @@
 import type { Skill } from '@/lib/types';
 import SkillCard from './SkillCard';
 import CrossPromo from './CrossPromo';
+import AdBanner from './AdBanner';
 
 interface Props {
   floor: number;
@@ -54,10 +55,7 @@ export default function GameOverScreen({ floor, skills, timer, bestFloor, isNewR
         </div>
       )}
 
-      {/* 広告プレースホルダー */}
-      <div className="w-full h-16 bg-gray-800 border border-dashed border-gray-600 rounded-xl flex items-center justify-center">
-        <span className="text-xs text-gray-600">広告枠</span>
-      </div>
+      <AdBanner />
 
       <button
         onClick={onRestart}
