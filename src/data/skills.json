@@ -1,0 +1,58 @@
+[
+  {
+    "id": "xray",
+    "name": "透視の目",
+    "description": "1回だけ指定セルの中身を安全に確認",
+    "rarity": 2,
+    "type": "active"
+  },
+  {
+    "id": "detector",
+    "name": "地雷探知機",
+    "description": "1回だけランダムな地雷1つにフラグを自動設置",
+    "rarity": 2,
+    "type": "active"
+  },
+  {
+    "id": "shield",
+    "name": "シールド",
+    "description": "次に地雷を踏んでも1回だけ耐える",
+    "rarity": 3,
+    "type": "active"
+  },
+  {
+    "id": "hourglass",
+    "name": "時戻しの砂時計",
+    "description": "地雷を踏んだ直後に1手戻せる",
+    "rarity": 3,
+    "type": "active"
+  },
+  {
+    "id": "whisper",
+    "name": "数字の囁き",
+    "description": "次のフロアで最初に安全なセルを3つ自動で開く",
+    "rarity": 1,
+    "type": "passive"
+  },
+  {
+    "id": "amulet",
+    "name": "幸運のお守り",
+    "description": "次のフロアの地雷数を2つ減らす",
+    "rarity": 1,
+    "type": "passive"
+  },
+  {
+    "id": "doubleflag",
+    "name": "ダブルフラグ",
+    "description": "フラグを立てると隣接する地雷にも自動フラグ（1回）",
+    "rarity": 2,
+    "type": "active"
+  },
+  {
+    "id": "shrink",
+    "name": "マップ縮小",
+    "description": "次のフロアの盤面サイズを1段階小さくする",
+    "rarity": 1,
+    "type": "passive"
+  }
+]
