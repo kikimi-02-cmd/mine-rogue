@@ -1,5 +1,8 @@
 'use client';
+import { useRef, useState } from 'react';
 import type { Cell as CellType } from '@/lib/types';
+
+const LONG_PRESS_MS = 800;
 
 interface Props {
   cell: CellType;
@@ -23,6 +26,62 @@ const NUMBER_COLORS: Record<number, string> = {
 };
 
 export default function Cell({ cell, x, y, onReveal, onFlag, xrayMode, cellSize }: Props) {
+  const [pressing, setPressing] = useState(false);
+  // null = タイマー未起動 or 発火済み、non-null = タイマー待機中
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // タッチイベントが発生したかどうか（ゴーストclickをブロックするため）
+  const hasTouchRef = useRef(false);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    if (e.touches.length !== 1) return;
+    hasTouchRef.current = true;
+    setPressing(true);
+    timerRef.current = setTimeout(() => {
+      // 長押し完了: timerRef.current を null にしてから onFlag 呼び出し
+      timerRef.current = null;
+      setPressing(false);
+      onFlag(x, y);
+    }, LONG_PRESS_MS);
+  }
+
+  function handleTouchEnd() {
+    if (timerRef.current !== null) {
+      // タイマーがまだ生きている → 800ms未満のタップ
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+      setPressing(false);
+      onReveal(x, y);
+    } else {
+      // タイマーが発火済み → 長押し完了、onFlag は既に呼ばれている
+      setPressing(false);
+    }
+  }
+
+  function handleTouchMove() {
+    // スクロール操作との競合防止: 長押しキャンセル
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setPressing(false);
+  }
+
+  function handleClick() {
+    // タッチ操作後に発生するゴーストclickをブロック
+    if (hasTouchRef.current) {
+      hasTouchRef.current = false;
+      return;
+    }
+    // PC（マウス）クリックのみここに到達
+    onReveal(x, y);
+  }
+
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    // PC右クリックで旗トグル
+    onFlag(x, y);
+  }
+
   const size = `${cellSize}px`;
 
   if (cell.state === 'revealed') {
@@ -50,13 +109,17 @@ export default function Cell({ cell, x, y, onReveal, onFlag, xrayMode, cellSize 
   if (cell.state === 'flagged') {
     return (
       <div
-        data-cell=""
-        data-cell-x={x}
-        data-cell-y={y}
         style={{ width: size, height: size }}
-        className="flex items-center justify-center rounded bg-[#374151] border border-yellow-600 text-sm cursor-pointer select-none"
-        onClick={() => onReveal(x, y)}
-        onContextMenu={(e) => { e.preventDefault(); onFlag(x, y); }}
+        className={`flex items-center justify-center rounded border text-sm cursor-pointer select-none transition-colors
+          ${pressing
+            ? 'bg-[#6B7280] border-gray-400'
+            : 'bg-[#374151] border-yellow-600'
+          }`}
+        onClick={handleClick}
+        onContextMenu={handleContextMenu}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
       >
         🚩
       </div>
@@ -76,16 +139,20 @@ export default function Cell({ cell, x, y, onReveal, onFlag, xrayMode, cellSize 
     );
   }
 
-  // hidden
+  // hidden（通常の未開封セル）
   return (
     <div
-      data-cell=""
-      data-cell-x={x}
-      data-cell-y={y}
       style={{ width: size, height: size }}
-      className="flex items-center justify-center rounded bg-[#374151] border border-gray-600 cursor-pointer hover:bg-[#4B5563] active:bg-[#6B7280] transition-colors select-none"
-      onClick={() => onReveal(x, y)}
-      onContextMenu={(e) => { e.preventDefault(); onFlag(x, y); }}
+      className={`flex items-center justify-center rounded border text-sm cursor-pointer select-none transition-colors
+        ${pressing
+          ? 'bg-[#6B7280] border-gray-400'
+          : 'bg-[#374151] border-gray-600 hover:bg-[#4B5563] active:bg-[#6B7280]'
+        }`}
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
     </div>
   );
