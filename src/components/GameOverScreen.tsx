@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import type { Skill } from '@/lib/types';
 import SkillCard from './SkillCard';
 import CrossPromo from './CrossPromo';
@@ -19,6 +22,30 @@ function formatTime(seconds: number): string {
 }
 
 export default function GameOverScreen({ floor, skills, timer, bestFloor, isNewRecord, onRestart }: Props) {
+  const [copied, setCopied] = useState(false);
+
+  const skillNames = skills.length > 0 ? skills.map((s) => s.name).join(', ') : 'なし';
+  const shareText = [
+    'Mine Rogue ⛏',
+    `到達: ${floor}フロア`,
+    `スキル: ${skillNames}`,
+    `⏱ ${formatTime(timer)}`,
+    '',
+    'https://mine-rogue.vercel.app/',
+  ].join('\n');
+
+  function handleShare() {
+    navigator.clipboard.writeText(shareText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {/* ignore */});
+  }
+
+  function handleXShare() {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   return (
     <div className="flex flex-col gap-4 py-8 px-4">
       <div className="text-center">
@@ -54,6 +81,22 @@ export default function GameOverScreen({ floor, skills, timer, bestFloor, isNewR
           </div>
         </div>
       )}
+
+      {/* シェアボタン */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleShare}
+          className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-colors"
+        >
+          {copied ? 'コピーしました！' : '結果をシェア'}
+        </button>
+        <button
+          onClick={handleXShare}
+          className="flex-1 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-600 text-white font-bold text-sm transition-colors"
+        >
+          𝕏 でシェア
+        </button>
+      </div>
 
       <AdBanner />
 
