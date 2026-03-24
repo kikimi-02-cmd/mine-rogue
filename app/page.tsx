@@ -34,6 +34,7 @@ export default function Page() {
   const [skillChoices, setSkillChoices] = useState<Skill[]>([]);
   const [activeSkillId, setActiveSkillId] = useState<string | undefined>();
   const [xrayMode, setXrayMode] = useState(false);
+  const [flagMode, setFlagMode] = useState(false);
   const [isNewRecord, setIsNewRecord] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -241,6 +242,7 @@ export default function Page() {
   const handleRestart = useCallback(() => {
     setIsNewRecord(false);
     setXrayMode(false);
+    setFlagMode(false);
     setActiveSkillId(undefined);
     setState((prev) => createInitialState(prev.bestFloor));
   }, []);
@@ -289,12 +291,35 @@ export default function Page() {
               onContinue={handleFloorClearContinue}
             />
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setFlagMode(false)}
+                  className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                    !flagMode
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-[#374151] text-gray-300 hover:bg-[#4B5563]'
+                  }`}
+                >
+                  掘る⛏
+                </button>
+                <button
+                  onClick={() => setFlagMode(true)}
+                  className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
+                    flagMode
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-[#374151] text-gray-300 hover:bg-[#4B5563]'
+                  }`}
+                >
+                  旗🚩
+                </button>
+              </div>
               <Board
                 board={state.board}
                 boardSize={state.boardSize}
                 onReveal={handleReveal}
                 onFlag={handleFlag}
+                flagMode={flagMode}
                 xrayMode={xrayMode}
               />
             </div>
