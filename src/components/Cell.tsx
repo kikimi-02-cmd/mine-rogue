@@ -1,5 +1,4 @@
 'use client';
-import { useRef } from 'react';
 import type { Cell as CellType } from '@/lib/types';
 
 interface Props {
@@ -24,34 +23,6 @@ const NUMBER_COLORS: Record<number, string> = {
 };
 
 export default function Cell({ cell, x, y, onReveal, onFlag, xrayMode, cellSize }: Props) {
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didLongPress = useRef(false);
-
-  function handleTouchStart() {
-    didLongPress.current = false;
-    longPressTimer.current = setTimeout(() => {
-      didLongPress.current = true;
-      onFlag(x, y);
-    }, 500);
-  }
-
-  function handleTouchEnd(e: React.TouchEvent) {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-    if (didLongPress.current) {
-      e.preventDefault();
-    }
-  }
-
-  function handleClick() {
-    if (didLongPress.current) return;
-    onReveal(x, y);
-  }
-
-  function handleContextMenu(e: React.MouseEvent) {
-    e.preventDefault();
-    onFlag(x, y);
-  }
-
   const size = `${cellSize}px`;
 
   if (cell.state === 'revealed') {
@@ -79,39 +50,42 @@ export default function Cell({ cell, x, y, onReveal, onFlag, xrayMode, cellSize 
   if (cell.state === 'flagged') {
     return (
       <div
+        data-cell=""
+        data-cell-x={x}
+        data-cell-y={y}
         style={{ width: size, height: size }}
         className="flex items-center justify-center rounded bg-[#374151] border border-yellow-600 text-sm cursor-pointer select-none"
-        onClick={handleClick}
-        onContextMenu={handleContextMenu}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        onClick={() => onReveal(x, y)}
+        onContextMenu={(e) => { e.preventDefault(); onFlag(x, y); }}
       >
         🚩
       </div>
     );
   }
 
-  // hidden
+  // xrayMode（隠れている地雷を透視表示）
   if (xrayMode) {
     return (
       <div
         style={{ width: size, height: size }}
         className="flex items-center justify-center rounded bg-violet-800 border border-violet-500 cursor-crosshair text-xs select-none animate-pulse"
-        onClick={handleClick}
+        onClick={() => onReveal(x, y)}
       >
         ?
       </div>
     );
   }
 
+  // hidden
   return (
     <div
+      data-cell=""
+      data-cell-x={x}
+      data-cell-y={y}
       style={{ width: size, height: size }}
       className="flex items-center justify-center rounded bg-[#374151] border border-gray-600 cursor-pointer hover:bg-[#4B5563] active:bg-[#6B7280] transition-colors select-none"
-      onClick={handleClick}
-      onContextMenu={handleContextMenu}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
+      onClick={() => onReveal(x, y)}
+      onContextMenu={(e) => { e.preventDefault(); onFlag(x, y); }}
     >
     </div>
   );
