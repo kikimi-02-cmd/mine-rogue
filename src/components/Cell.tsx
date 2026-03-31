@@ -1,5 +1,5 @@
-'use client';
-import type { Cell as CellType } from '@/lib/types';
+"use client";
+import type { Cell as CellType } from "@/lib/types";
 
 interface Props {
   cell: CellType;
@@ -13,88 +13,109 @@ interface Props {
 }
 
 const NUMBER_COLORS: Record<number, string> = {
-  1: 'text-blue-400',
-  2: 'text-emerald-400',
-  3: 'text-red-400',
-  4: 'text-violet-400',
-  5: 'text-yellow-400',
-  6: 'text-cyan-400',
-  7: 'text-pink-400',
-  8: 'text-gray-400',
+  1: "#38BDF8",
+  2: "#34D399",
+  3: "#F87171",
+  4: "#A78BFA",
+  5: "#FB923C",
+  6: "#22D3EE",
+  7: "#F1F5F9",
+  8: "#94A3B8",
 };
 
-export default function Cell({ cell, x, y, onReveal, onFlag, flagMode, xrayMode, cellSize }: Props) {
+export default function Cell({
+  cell,
+  x,
+  y,
+  onReveal,
+  onFlag,
+  flagMode,
+  xrayMode,
+  cellSize,
+}: Props) {
   function handleClick() {
-    if (flagMode) {
-      onFlag(x, y);
-    } else {
-      onReveal(x, y);
-    }
+    if (flagMode) onFlag(x, y);
+    else onReveal(x, y);
   }
-
   function handleContextMenu(e: React.MouseEvent) {
     e.preventDefault();
     onFlag(x, y);
   }
 
-  const size = `${cellSize}px`;
+  const baseStyle: React.CSSProperties = { width: cellSize, height: cellSize };
+  const fontSize = Math.max(11, Math.floor(cellSize * 0.5));
 
-  if (cell.state === 'revealed') {
+  if (cell.state === "revealed") {
     if (cell.isMine) {
       return (
         <div
-          style={{ width: size, height: size }}
-          className="flex items-center justify-center rounded bg-red-900 border border-red-700 text-sm select-none"
+          style={baseStyle}
+          className="flex items-center justify-center bg-red-700/90 border border-red-500 select-none animate-pulse rounded-sm"
         >
-          💣
+          <span style={{ fontSize: Math.floor(fontSize * 0.85) }}>💣</span>
         </div>
       );
     }
+    const color =
+      cell.adjacentMines > 0 ? NUMBER_COLORS[cell.adjacentMines] : undefined;
     return (
       <div
-        style={{ width: size, height: size }}
-        className={`flex items-center justify-center rounded bg-[#1F2937] border border-gray-700 font-bold text-sm select-none
-          ${cell.adjacentMines > 0 ? NUMBER_COLORS[cell.adjacentMines] ?? 'text-gray-300' : ''}`}
+        style={baseStyle}
+        className="flex items-center justify-center bg-[#334155] border border-[#475569] select-none rounded-sm"
       >
-        {cell.adjacentMines > 0 ? cell.adjacentMines : ''}
+        {cell.adjacentMines > 0 && (
+          <span style={{ fontSize, color, fontWeight: 900, lineHeight: 1 }}>
+            {cell.adjacentMines}
+          </span>
+        )}
       </div>
     );
   }
 
-  if (cell.state === 'flagged') {
+  if (cell.state === "flagged") {
     return (
       <div
-        style={{ width: size, height: size }}
-        className="flex items-center justify-center rounded bg-[#374151] border border-yellow-600 text-sm cursor-pointer select-none"
+        style={baseStyle}
+        className="flex items-center justify-center bg-[#2A2415] border border-yellow-500/50 cursor-pointer select-none rounded-sm"
         onClick={handleClick}
         onContextMenu={handleContextMenu}
       >
-        🚩
+        <span style={{ fontSize: Math.floor(fontSize * 0.85) }}>🚩</span>
       </div>
     );
   }
 
-  // xrayMode（隠れている地雷を透視表示）
   if (xrayMode) {
     return (
       <div
-        style={{ width: size, height: size }}
-        className="flex items-center justify-center rounded bg-violet-800 border border-violet-500 cursor-crosshair text-xs select-none animate-pulse"
+        style={baseStyle}
+        className="flex items-center justify-center bg-violet-800 border border-violet-400 cursor-crosshair select-none animate-pulse rounded-sm"
         onClick={() => onReveal(x, y)}
       >
-        ?
+        <span
+          style={{
+            fontSize: Math.floor(fontSize * 0.65),
+            color: "#C4B5FD",
+            fontWeight: 700,
+          }}
+        >
+          ?
+        </span>
       </div>
     );
   }
 
-  // hidden（通常の未開封セル）
   return (
     <div
-      style={{ width: size, height: size }}
-      className="flex items-center justify-center rounded border text-sm cursor-pointer select-none transition-colors bg-[#374151] border-gray-600 hover:bg-[#4B5563] active:bg-[#6B7280]"
+      style={{
+        ...baseStyle,
+        background: "linear-gradient(145deg, #4A5D78 0%, #2C3E55 100%)",
+        boxShadow:
+          "inset 1px 1px 0 rgba(255,255,255,0.12), inset -1px -1px 0 rgba(0,0,0,0.2)",
+      }}
+      className="flex items-center justify-center rounded-sm cursor-pointer select-none border border-[#1A2D45]/80 hover:brightness-125 active:brightness-75 transition-[filter] duration-75"
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-    >
-    </div>
+    />
   );
 }

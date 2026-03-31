@@ -1,1 +1,38 @@
 @import "tailwindcss";
+
+@keyframes flashGreen {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  35% {
+    background-color: rgba(16, 185, 129, 0.28);
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+.animate-flash-green {
+  animation: flashGreen 0.8s ease-in-out;
+}
+
+.animate-fade-in-out {
+  animation: fadeInOut 1.7s ease-in-out forwards;
+}

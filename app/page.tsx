@@ -1,16 +1,28 @@
-'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
-import type { GameState, Skill } from '@/lib/types';
-import { createEmptyBoard, generateBoard, floodReveal, isCleared, countFlags, getFloorConfig } from '@/lib/board';
-import { getRandomSkillChoices, applyDetector, applyDoubleFlag, getAutoRevealCells } from '@/lib/skills';
-import { loadBestFloor, saveBestFloor } from '@/lib/storage';
-import Header from '@/components/Header';
-import Board from '@/components/Board';
-import SkillBar from '@/components/SkillBar';
-import SkillSelect from '@/components/SkillSelect';
-import FloorClearScreen from '@/components/FloorClearScreen';
-import GameOverScreen from '@/components/GameOverScreen';
-import Link from 'next/link';
+"use client";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { GameState, Skill } from "@/lib/types";
+import {
+  createEmptyBoard,
+  generateBoard,
+  floodReveal,
+  isCleared,
+  countFlags,
+  getFloorConfig,
+} from "@/lib/board";
+import {
+  getRandomSkillChoices,
+  applyDetector,
+  applyDoubleFlag,
+  getAutoRevealCells,
+} from "@/lib/skills";
+import { loadBestFloor, saveBestFloor } from "@/lib/storage";
+import Header from "@/components/Header";
+import Board from "@/components/Board";
+import SkillBar from "@/components/SkillBar";
+import SkillSelect from "@/components/SkillSelect";
+import FloorClearScreen from "@/components/FloorClearScreen";
+import GameOverScreen from "@/components/GameOverScreen";
+import Link from "next/link";
 
 function createInitialState(bestFloor: number): GameState {
   const { size, mineCount } = getFloorConfig(1);
@@ -20,7 +32,7 @@ function createInitialState(bestFloor: number): GameState {
     boardSize: size,
     mineCount,
     skills: [],
-    gamePhase: 'playing',
+    gamePhase: "playing",
     timer: 0,
     bestFloor,
     firstClick: true,
@@ -45,10 +57,9 @@ export default function Page() {
     setState(createInitialState(best));
   }, []);
 
-  // タイマー
   useEffect(() => {
     if (!mounted) return;
-    if (state.gamePhase === 'playing') {
+    if (state.gamePhase === "playing") {
       timerRef.current = setInterval(() => {
         setState((prev) => ({ ...prev, timer: prev.timer + 1 }));
       }, 1000);
@@ -60,113 +71,115 @@ export default function Page() {
     };
   }, [mounted, state.gamePhase]);
 
-  const handleReveal = useCallback((x: number, y: number) => {
-    setState((prev) => {
-      if (prev.gamePhase !== 'playing') return prev;
-      const cell = prev.board[y][x];
-      if (cell.state !== 'hidden') return prev;
+  const handleReveal = useCallback(
+    (x: number, y: number) => {
+      setState((prev) => {
+        if (prev.gamePhase !== "playing") return prev;
+        const cell = prev.board[y][x];
+        if (cell.state !== "hidden") return prev;
 
-      // xrayモード
-      if (xrayMode) {
-        setXrayMode(false);
-        setActiveSkillId(undefined);
-        // スキルを消費済みにする
-        const updatedSkills = prev.skills.map((s) =>
-          s.id === 'xray' && !s.used ? { ...s, used: true } : s
-        );
-        if (cell.isMine) {
-          // 中身を表示するだけ（安全に確認 = 地雷でも死なない、でも開かない）
-          return { ...prev, skills: updatedSkills };
+        if (xrayMode) {
+          setXrayMode(false);
+          setActiveSkillId(undefined);
+          const updatedSkills = prev.skills.map((s) =>
+            s.id === "xray" && !s.used ? { ...s, used: true } : s,
+          );
+          if (cell.isMine) return { ...prev, skills: updatedSkills };
+          const newBoard = floodReveal(prev.board, x, y, prev.boardSize);
+          const cleared = isCleared(newBoard, prev.boardSize);
+          return {
+            ...prev,
+            board: newBoard,
+            skills: updatedSkills,
+            gamePhase: cleared ? "cleared" : "playing",
+          };
         }
-        const newBoard = floodReveal(prev.board, x, y, prev.boardSize);
+
+        let board = prev.board;
+        if (prev.firstClick) {
+          board = generateBoard(prev.boardSize, prev.mineCount, x, y);
+          if (prev.pendingAutoReveal > 0) {
+            const autoRevealCells = getAutoRevealCells(
+              board,
+              prev.boardSize,
+              prev.pendingAutoReveal,
+            );
+            for (const [ax, ay] of autoRevealCells) {
+              board = floodReveal(board, ax, ay, prev.boardSize);
+            }
+          }
+        }
+
+        const clickedCell = board[y][x];
+
+        if (clickedCell.isMine) {
+          const hasShield = prev.skills.some(
+            (s) => s.id === "shield" && !s.used,
+          );
+          if (hasShield) {
+            const updatedSkills = prev.skills.map((s) =>
+              s.id === "shield" && !s.used ? { ...s, used: true } : s,
+            );
+            return { ...prev, board, firstClick: false, skills: updatedSkills };
+          }
+          const hasHourglass = prev.skills.some(
+            (s) => s.id === "hourglass" && !s.used,
+          );
+          if (hasHourglass) {
+            const updatedSkills = prev.skills.map((s) =>
+              s.id === "hourglass" && !s.used ? { ...s, used: true } : s,
+            );
+            return { ...prev, board, firstClick: false, skills: updatedSkills };
+          }
+          const newBest = prev.floor > prev.bestFloor;
+          if (newBest) {
+            saveBestFloor(prev.floor);
+            setIsNewRecord(true);
+          }
+          const revealedBoard = board.map((row) =>
+            row.map((c) =>
+              c.isMine ? { ...c, state: "revealed" as const } : c,
+            ),
+          );
+          return {
+            ...prev,
+            board: revealedBoard,
+            firstClick: false,
+            bestFloor: newBest ? prev.floor : prev.bestFloor,
+            gamePhase: "gameOver",
+          };
+        }
+
+        const newBoard = floodReveal(board, x, y, prev.boardSize);
         const cleared = isCleared(newBoard, prev.boardSize);
         return {
           ...prev,
           board: newBoard,
-          skills: updatedSkills,
-          gamePhase: cleared ? 'cleared' : 'playing',
-        };
-      }
-
-      // 初回クリック: 盤面生成
-      let board = prev.board;
-      if (prev.firstClick) {
-        board = generateBoard(prev.boardSize, prev.mineCount, x, y);
-        // 数字の囁きスキルの処理
-        if (prev.pendingAutoReveal > 0) {
-          const autoRevealCells = getAutoRevealCells(board, prev.boardSize, prev.pendingAutoReveal);
-          for (const [ax, ay] of autoRevealCells) {
-            board = floodReveal(board, ax, ay, prev.boardSize);
-          }
-        }
-      }
-
-      const clickedCell = board[y][x];
-
-      // 地雷を踏んだ
-      if (clickedCell.isMine) {
-        const hasShield = prev.skills.some((s) => s.id === 'shield' && !s.used);
-        if (hasShield) {
-          const updatedSkills = prev.skills.map((s) =>
-            s.id === 'shield' && !s.used ? { ...s, used: true } : s
-          );
-          return { ...prev, board, firstClick: false, skills: updatedSkills };
-        }
-
-        const hasHourglass = prev.skills.some((s) => s.id === 'hourglass' && !s.used);
-        if (hasHourglass) {
-          const updatedSkills = prev.skills.map((s) =>
-            s.id === 'hourglass' && !s.used ? { ...s, used: true } : s
-          );
-          return { ...prev, board, firstClick: false, skills: updatedSkills };
-        }
-
-        // ゲームオーバー
-        const newBest = prev.floor > prev.bestFloor;
-        if (newBest) {
-          saveBestFloor(prev.floor);
-          setIsNewRecord(true);
-        }
-        const revealedBoard = board.map((row) =>
-          row.map((c) => (c.isMine ? { ...c, state: 'revealed' as const } : c))
-        );
-        return {
-          ...prev,
-          board: revealedBoard,
           firstClick: false,
-          bestFloor: newBest ? prev.floor : prev.bestFloor,
-          gamePhase: 'gameOver',
+          gamePhase: cleared ? "cleared" : "playing",
         };
-      }
-
-      const newBoard = floodReveal(board, x, y, prev.boardSize);
-      const cleared = isCleared(newBoard, prev.boardSize);
-      return {
-        ...prev,
-        board: newBoard,
-        firstClick: false,
-        gamePhase: cleared ? 'cleared' : 'playing',
-      };
-    });
-  }, [xrayMode]);
+      });
+    },
+    [xrayMode],
+  );
 
   const handleFlag = useCallback((x: number, y: number) => {
     setState((prev) => {
-      if (prev.gamePhase !== 'playing') return prev;
+      if (prev.gamePhase !== "playing") return prev;
       const cell = prev.board[y][x];
-      if (cell.state === 'revealed') return prev;
-
+      if (cell.state === "revealed") return prev;
       const next = prev.board.map((row) => row.map((c) => ({ ...c })));
-      if (cell.state === 'flagged') {
-        next[y][x].state = 'hidden';
+      if (cell.state === "flagged") {
+        next[y][x].state = "hidden";
       } else {
-        next[y][x].state = 'flagged';
-        // ダブルフラグスキル
-        const hasDoubleFlag = prev.skills.some((s) => s.id === 'doubleflag' && !s.used);
+        next[y][x].state = "flagged";
+        const hasDoubleFlag = prev.skills.some(
+          (s) => s.id === "doubleflag" && !s.used,
+        );
         if (hasDoubleFlag) {
           const dfBoard = applyDoubleFlag(next, x, y, prev.boardSize);
           const updatedSkills = prev.skills.map((s) =>
-            s.id === 'doubleflag' && !s.used ? { ...s, used: true } : s
+            s.id === "doubleflag" && !s.used ? { ...s, used: true } : s,
           );
           return { ...prev, board: dfBoard, skills: updatedSkills };
         }
@@ -176,7 +189,7 @@ export default function Page() {
   }, []);
 
   const handleFloorClearContinue = useCallback(() => {
-    setState((prev) => ({ ...prev, gamePhase: 'skillSelect' }));
+    setState((prev) => ({ ...prev, gamePhase: "skillSelect" }));
     setSkillChoices(getRandomSkillChoices(3));
   }, []);
 
@@ -184,32 +197,18 @@ export default function Page() {
     setState((prev) => {
       const nextFloor = prev.floor + 1;
       const config = getFloorConfig(nextFloor);
-
       let mineCount = config.mineCount;
       let boardSize = config.size;
       let pendingAutoReveal = 0;
-
-      // パッシブスキル効果の適用
       const newSkill = { ...skill, used: false };
       const allSkills = [...prev.skills, newSkill];
-
-      // 幸運のお守り
-      if (skill.id === 'amulet') {
-        mineCount = Math.max(1, mineCount - 2);
-      }
-      // マップ縮小
-      if (skill.id === 'shrink') {
+      if (skill.id === "amulet") mineCount = Math.max(1, mineCount - 2);
+      if (skill.id === "shrink") {
         boardSize = Math.max(4, boardSize - 1);
         mineCount = Math.min(mineCount, boardSize * boardSize - 9);
       }
-      // 数字の囁き
-      if (skill.id === 'whisper') {
-        pendingAutoReveal = 3;
-      }
-
-      // 既存の減少を引き継ぎ
+      if (skill.id === "whisper") pendingAutoReveal = 3;
       mineCount = Math.max(1, mineCount - prev.pendingMineReduction);
-
       return {
         ...prev,
         floor: nextFloor,
@@ -217,7 +216,7 @@ export default function Page() {
         boardSize,
         mineCount,
         skills: allSkills,
-        gamePhase: 'playing',
+        gamePhase: "playing",
         firstClick: true,
         pendingMineReduction: 0,
         pendingAutoReveal,
@@ -226,14 +225,14 @@ export default function Page() {
   }, []);
 
   const handleUseSkill = useCallback((skillId: string) => {
-    if (skillId === 'xray') {
+    if (skillId === "xray") {
       setXrayMode((prev) => !prev);
       setActiveSkillId((prev) => (prev === skillId ? undefined : skillId));
-    } else if (skillId === 'detector') {
+    } else if (skillId === "detector") {
       setState((prev) => {
         const newBoard = applyDetector(prev.board, prev.boardSize);
         const updatedSkills = prev.skills.map((s) =>
-          s.id === 'detector' && !s.used ? { ...s, used: true } : s
+          s.id === "detector" && !s.used ? { ...s, used: true } : s,
         );
         return { ...prev, board: newBoard, skills: updatedSkills };
       });
@@ -249,94 +248,117 @@ export default function Page() {
   }, []);
 
   if (!mounted) {
-    return <div className="min-h-screen bg-[#111827]" />;
+    return <div className="h-[100dvh] bg-[#0A1628]" />;
   }
 
   const flagCount = countFlags(state.board, state.boardSize);
+  const revealedCount = state.board
+    .flat()
+    .filter((c) => c.state === "revealed" && !c.isMine).length;
+  const isInitialState = state.floor === 1 && state.firstClick;
 
-  return (
-    <div className="min-h-screen bg-[#111827] text-white flex flex-col max-w-sm mx-auto">
-      {state.gamePhase === 'gameOver' ? (
+  // Game Over
+  if (state.gamePhase === "gameOver") {
+    return (
+      <div className="h-[100dvh] bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <GameOverScreen
           floor={state.floor}
           skills={state.skills}
           timer={state.timer}
           bestFloor={state.bestFloor}
           isNewRecord={isNewRecord}
+          revealedCount={revealedCount}
           onRestart={handleRestart}
         />
-      ) : state.gamePhase === 'skillSelect' ? (
+      </div>
+    );
+  }
+
+  // Skill Select
+  if (state.gamePhase === "skillSelect") {
+    return (
+      <div className="h-[100dvh] bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <SkillSelect
           choices={skillChoices}
           onSelect={handleSkillSelect}
           floor={state.floor}
         />
-      ) : (
-        <>
-          <Header
+      </div>
+    );
+  }
+
+  // Playing / Cleared
+  return (
+    <div className="h-[100dvh] flex flex-col bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-hidden">
+      <Header
+        floor={state.floor}
+        mineCount={state.mineCount}
+        flagCount={flagCount}
+        timer={state.timer}
+      />
+      <SkillBar
+        skills={state.skills}
+        onUseSkill={handleUseSkill}
+        activeSkillId={activeSkillId}
+      />
+
+      {/* Board area - centered */}
+      <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden gap-2">
+        {state.gamePhase === "cleared" && (
+          <FloorClearScreen
             floor={state.floor}
-            mineCount={state.mineCount}
-            flagCount={flagCount}
-            timer={state.timer}
-            bestFloor={state.bestFloor}
+            onContinue={handleFloorClearContinue}
           />
-          <SkillBar
-            skills={state.skills}
-            onUseSkill={handleUseSkill}
-            activeSkillId={activeSkillId}
+        )}
+        {isInitialState && (
+          <Link
+            href="/how-to-play"
+            className="text-xs text-gray-600 hover:text-gray-400 transition-colors underline underline-offset-2"
+          >
+            遊び方を見る
+          </Link>
+        )}
+        <div
+          className="rounded-lg p-1.5"
+          style={{
+            background: "#1E293B",
+            border: "1px solid rgba(51,65,85,0.5)",
+          }}
+        >
+          <Board
+            board={state.board}
+            boardSize={state.boardSize}
+            onReveal={handleReveal}
+            onFlag={handleFlag}
+            flagMode={flagMode}
+            xrayMode={xrayMode}
           />
-          {state.gamePhase === 'cleared' ? (
-            <FloorClearScreen
-              floor={state.floor}
-              timer={state.timer}
-              onContinue={handleFloorClearContinue}
-            />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setFlagMode(false)}
-                  className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
-                    !flagMode
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-[#374151] text-gray-300 hover:bg-[#4B5563]'
-                  }`}
-                >
-                  掘る⛏
-                </button>
-                <button
-                  onClick={() => setFlagMode(true)}
-                  className={`px-4 py-2 rounded text-sm font-bold transition-colors ${
-                    flagMode
-                      ? 'bg-yellow-600 text-white'
-                      : 'bg-[#374151] text-gray-300 hover:bg-[#4B5563]'
-                  }`}
-                >
-                  旗🚩
-                </button>
-              </div>
-{state.floor === 1 && state.firstClick && (
-                <div className="text-center px-2 py-3 space-y-1">
-                  <p className="text-sm text-gray-300 leading-relaxed">
-                    マインスイーパー×ローグライク。地雷を避けてダンジョンを踏破せよ！
-                  </p>
-                  <Link href="/how-to-play" className="inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300">
-                    遊び方を見る
-                  </Link>
-                </div>
-              )}
-              <Board
-                board={state.board}
-                boardSize={state.boardSize}
-                onReveal={handleReveal}
-                onFlag={handleFlag}
-                flagMode={flagMode}
-                xrayMode={xrayMode}
-              />
-            </div>
-          )}
-        </>
-      )}
+        </div>
+      </main>
+
+      {/* Bottom mode buttons */}
+      <div className="flex items-center justify-center gap-4 px-4 py-3 bg-[#0F172A] border-t border-[#1E3A5F]">
+        <button
+          onClick={() => setFlagMode(false)}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
+            !flagMode
+              ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
+              : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+          }`}
+        >
+          ⛏ 掘る
+        </button>
+        <button
+          onClick={() => setFlagMode(true)}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
+            flagMode
+              ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
+              : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+          }`}
+        >
+          🚩 旗
+        </button>
+      </div>
     </div>
   );
 }
