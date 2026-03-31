@@ -299,7 +299,7 @@ export default function Page() {
         activeSkillId={activeSkillId}
       />
 
-      {/* Board area - centered */}
+      {/* Board + mode buttons centered as one unit */}
       <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden">
         {state.gamePhase === "cleared" && (
           <FloorClearScreen
@@ -307,47 +307,47 @@ export default function Page() {
             onContinue={handleFloorClearContinue}
           />
         )}
-        <div
-          className="rounded-lg p-1.5"
-          style={{
-            background: "#1E293B",
-            border: "1px solid rgba(51,65,85,0.5)",
-          }}
-        >
-          <Board
-            board={state.board}
-            boardSize={state.boardSize}
-            onReveal={handleReveal}
-            onFlag={handleFlag}
-            flagMode={flagMode}
-            xrayMode={xrayMode}
-          />
+        <div className="flex flex-col items-center" style={{ gap: "8px" }}>
+          <div
+            className="rounded-lg p-1.5"
+            style={{
+              background: "#1E293B",
+              border: "1px solid rgba(51,65,85,0.5)",
+            }}
+          >
+            <Board
+              board={state.board}
+              boardSize={state.boardSize}
+              onReveal={handleReveal}
+              onFlag={handleFlag}
+              flagMode={flagMode}
+              xrayMode={xrayMode}
+            />
+          </div>
+          <div className="flex items-center justify-center gap-4">
+            <button
+              onClick={() => setFlagMode(false)}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
+                !flagMode
+                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
+                  : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+              }`}
+            >
+              ⛏ 掘る
+            </button>
+            <button
+              onClick={() => setFlagMode(true)}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
+                flagMode
+                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
+                  : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+              }`}
+            >
+              🚩 旗
+            </button>
+          </div>
         </div>
       </main>
-
-      {/* Bottom mode buttons */}
-      <div className="flex items-center justify-center gap-4 px-4 py-3 bg-[#0F172A] border-t border-[#1E3A5F]">
-        <button
-          onClick={() => setFlagMode(false)}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
-            !flagMode
-              ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
-              : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
-          }`}
-        >
-          ⛏ 掘る
-        </button>
-        <button
-          onClick={() => setFlagMode(true)}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
-            flagMode
-              ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
-              : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
-          }`}
-        >
-          🚩 旗
-        </button>
-      </div>
     </div>
   );
 }

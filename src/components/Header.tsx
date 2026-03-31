@@ -16,7 +16,7 @@ function formatTime(seconds: number): string {
 export default function Header({ floor, mineCount, flagCount, timer }: Props) {
   const remaining = mineCount - flagCount;
   return (
-    <div className="flex items-center justify-between px-4 py-2.5 bg-[#0F172A] border-b border-[#1E3A5F]">
+    <div className="flex items-center justify-between px-4 py-1.5 bg-[#0F172A] border-b border-[#1E3A5F]">
       <div className="w-16">
         <span className="text-[#10B981] font-black text-xl tracking-wide">
           B{floor}F
