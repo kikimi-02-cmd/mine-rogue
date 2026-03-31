@@ -22,7 +22,6 @@ import SkillBar from "@/components/SkillBar";
 import SkillSelect from "@/components/SkillSelect";
 import FloorClearScreen from "@/components/FloorClearScreen";
 import GameOverScreen from "@/components/GameOverScreen";
-import Link from "next/link";
 
 function createInitialState(bestFloor: number): GameState {
   const { size, mineCount } = getFloorConfig(1);
@@ -255,8 +254,6 @@ export default function Page() {
   const revealedCount = state.board
     .flat()
     .filter((c) => c.state === "revealed" && !c.isMine).length;
-  const isInitialState = state.floor === 1 && state.firstClick;
-
   // Game Over
   if (state.gamePhase === "gameOver") {
     return (
@@ -303,20 +300,12 @@ export default function Page() {
       />
 
       {/* Board area - centered */}
-      <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden gap-2">
+      <main className="relative flex-1 flex flex-col items-center justify-center overflow-hidden">
         {state.gamePhase === "cleared" && (
           <FloorClearScreen
             floor={state.floor}
             onContinue={handleFloorClearContinue}
           />
-        )}
-        {isInitialState && (
-          <Link
-            href="/how-to-play"
-            className="text-xs text-gray-600 hover:text-gray-400 transition-colors underline underline-offset-2"
-          >
-            遊び方を見る
-          </Link>
         )}
         <div
           className="rounded-lg p-1.5"

@@ -13,14 +13,14 @@ interface Props {
 }
 
 const NUMBER_COLORS: Record<number, string> = {
-  1: "#38BDF8",
-  2: "#34D399",
-  3: "#F87171",
-  4: "#A78BFA",
-  5: "#FB923C",
-  6: "#22D3EE",
-  7: "#F1F5F9",
-  8: "#94A3B8",
+  1: "#3B82F6",
+  2: "#22C55E",
+  3: "#EF4444",
+  4: "#A855F7",
+  5: "#F97316",
+  6: "#06B6D4",
+  7: "#1E293B",
+  8: "#6B7280",
 };
 
 export default function Cell({
@@ -43,7 +43,7 @@ export default function Cell({
   }
 
   const baseStyle: React.CSSProperties = { width: cellSize, height: cellSize };
-  const fontSize = Math.max(11, Math.floor(cellSize * 0.5));
+  const fontSize = Math.max(12, Math.floor(cellSize * 0.55));
 
   if (cell.state === "revealed") {
     if (cell.isMine) {
@@ -61,10 +61,10 @@ export default function Cell({
     return (
       <div
         style={baseStyle}
-        className="flex items-center justify-center bg-[#334155] border border-[#475569] select-none rounded-sm"
+        className="flex items-center justify-center bg-[#1E293B] border border-[#334155] select-none rounded-sm"
       >
         {cell.adjacentMines > 0 && (
-          <span style={{ fontSize, color, fontWeight: 900, lineHeight: 1 }}>
+          <span style={{ fontSize, color, fontWeight: 800, lineHeight: 1 }}>
             {cell.adjacentMines}
           </span>
         )}
@@ -109,9 +109,9 @@ export default function Cell({
     <div
       style={{
         ...baseStyle,
-        background: "linear-gradient(145deg, #4A5D78 0%, #2C3E55 100%)",
+        background: "linear-gradient(145deg, #5E7A9A 0%, #3D5470 100%)",
         boxShadow:
-          "inset 1px 1px 0 rgba(255,255,255,0.12), inset -1px -1px 0 rgba(0,0,0,0.2)",
+          "inset 1px 1px 0 rgba(255,255,255,0.15), inset -1px -1px 0 rgba(0,0,0,0.25)",
       }}
       className="flex items-center justify-center rounded-sm cursor-pointer select-none border border-[#1A2D45]/80 hover:brightness-125 active:brightness-75 transition-[filter] duration-75"
       onClick={handleClick}
