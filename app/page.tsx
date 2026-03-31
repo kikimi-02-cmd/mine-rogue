@@ -10,6 +10,7 @@ import SkillBar from '@/components/SkillBar';
 import SkillSelect from '@/components/SkillSelect';
 import FloorClearScreen from '@/components/FloorClearScreen';
 import GameOverScreen from '@/components/GameOverScreen';
+import Link from 'next/link';
 
 function createInitialState(bestFloor: number): GameState {
   const { size, mineCount } = getFloorConfig(1);
@@ -314,6 +315,16 @@ export default function Page() {
                   旗🚩
                 </button>
               </div>
+{state.floor === 1 && state.firstClick && (
+                <div className="text-center px-2 py-3 space-y-1">
+                  <p className="text-sm text-gray-300 leading-relaxed">
+                    マインスイーパー×ローグライク。地雷を避けてダンジョンを踏破せよ！
+                  </p>
+                  <Link href="/how-to-play" className="inline-block text-xs text-blue-400 underline underline-offset-2 hover:text-blue-300">
+                    遊び方を見る
+                  </Link>
+                </div>
+              )}
               <Board
                 board={state.board}
                 boardSize={state.boardSize}

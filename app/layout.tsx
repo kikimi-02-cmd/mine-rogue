@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'Mine Rogue | マインスイーパー×ローグライク',
@@ -22,7 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin="anonymous"
         />
       </head>
-      <body className="antialiased bg-[#111827] min-h-screen">{children}</body>
+      <body className="antialiased bg-[#111827] min-h-screen">
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
