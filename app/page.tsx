@@ -49,6 +49,7 @@ export default function Page() {
   const [flagMode, setFlagMode] = useState(false);
   const [isNewRecord, setIsNewRecord] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasSpeedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -56,12 +57,18 @@ export default function Page() {
     setState(createInitialState(best));
   }, []);
 
+  // Keep hasSpeedRef in sync for use in the timer effect
+  useEffect(() => {
+    hasSpeedRef.current = state.skills.some((s) => s.id === "speed");
+  }, [state.skills]);
+
   useEffect(() => {
     if (!mounted) return;
     if (state.gamePhase === "playing") {
+      const interval = hasSpeedRef.current ? 2000 : 1000;
       timerRef.current = setInterval(() => {
         setState((prev) => ({ ...prev, timer: prev.timer + 1 }));
-      }, 1000);
+      }, interval);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
@@ -188,9 +195,12 @@ export default function Page() {
   }, []);
 
   const handleFloorClearContinue = useCallback(() => {
+    const hasMagnet = state.skills.some((s) => s.id === "magnet");
+    const hasLucky = state.skills.some((s) => s.id === "lucky");
+    const count = hasMagnet ? 4 : 3;
+    setSkillChoices(getRandomSkillChoices(count, hasLucky));
     setState((prev) => ({ ...prev, gamePhase: "skillSelect" }));
-    setSkillChoices(getRandomSkillChoices(3));
-  }, []);
+  }, [state.skills]);
 
   const handleSkillSelect = useCallback((skill: Skill) => {
     setState((prev) => {

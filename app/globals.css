@@ -13,26 +13,41 @@
 @keyframes fadeInOut {
   0% {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(0.7);
   }
   20% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1.05);
   }
-  78% {
+  65% {
     opacity: 1;
     transform: scale(1);
   }
   100% {
     opacity: 0;
-    transform: scale(1.08);
+    transform: scale(1.1);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .animate-flash-green {
-  animation: flashGreen 0.8s ease-in-out;
+  animation: flashGreen 0.6s ease-in-out;
 }
 
 .animate-fade-in-out {
-  animation: fadeInOut 1.7s ease-in-out forwards;
+  animation: fadeInOut 1s ease-in-out forwards;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.25s ease-out forwards;
 }

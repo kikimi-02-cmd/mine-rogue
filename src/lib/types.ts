@@ -1,4 +1,4 @@
-export type CellState = 'hidden' | 'revealed' | 'flagged';
+export type CellState = "hidden" | "revealed" | "flagged";
 
 export interface Cell {
   isMine: boolean;
@@ -9,13 +9,14 @@ export interface Cell {
 export interface Skill {
   id: string;
   name: string;
+  icon: string;
   description: string;
   rarity: 1 | 2 | 3;
-  type: 'active' | 'passive';
+  type: "active" | "passive";
   used: boolean;
 }
 
-export type GamePhase = 'playing' | 'cleared' | 'skillSelect' | 'gameOver';
+export type GamePhase = "playing" | "cleared" | "skillSelect" | "gameOver";
 
 export interface GameState {
   floor: number;

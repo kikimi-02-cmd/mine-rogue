@@ -1,17 +1,35 @@
-import skillsData from '@/data/skills.json';
-import type { Skill } from './types';
-import type { Cell } from './types';
+import skillsData from "@/data/skills.json";
+import type { Skill } from "./types";
+import type { Cell } from "./types";
 
 interface SkillDef {
   id: string;
   name: string;
+  icon: string;
   description: string;
   rarity: 1 | 2 | 3;
-  type: 'active' | 'passive';
+  type: "active" | "passive";
 }
 
-export function getRandomSkillChoices(count: number = 3): Skill[] {
+export function getRandomSkillChoices(
+  count: number = 3,
+  hasLucky: boolean = false,
+): Skill[] {
   const pool = skillsData as SkillDef[];
+  if (hasLucky) {
+    const rare = pool.filter((s) => s.rarity === 3);
+    const nonRare = pool.filter((s) => s.rarity < 3);
+    const shuffledRare = [...rare].sort(() => Math.random() - 0.5);
+    const shuffledNonRare = [...nonRare].sort(() => Math.random() - 0.5);
+    const guaranteed = shuffledRare[0];
+    const rest = [...shuffledRare.slice(1), ...shuffledNonRare].sort(
+      () => Math.random() - 0.5,
+    );
+    return [guaranteed, ...rest.slice(0, count - 1)].map((s) => ({
+      ...s,
+      used: false,
+    }));
+  }
   const shuffled = [...pool].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count).map((s) => ({ ...s, used: false }));
 }
@@ -21,7 +39,7 @@ export function applyDetector(board: Cell[][], size: number): Cell[][] {
   const mines: [number, number][] = [];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      if (board[y][x].isMine && board[y][x].state !== 'flagged') {
+      if (board[y][x].isMine && board[y][x].state !== "flagged") {
         mines.push([x, y]);
       }
     }
@@ -29,11 +47,16 @@ export function applyDetector(board: Cell[][], size: number): Cell[][] {
   if (mines.length === 0) return board;
   const [mx, my] = mines[Math.floor(Math.random() * mines.length)];
   const next = board.map((row) => row.map((cell) => ({ ...cell })));
-  next[my][mx].state = 'flagged';
+  next[my][mx].state = "flagged";
   return next;
 }
 
-export function applyDoubleFlag(board: Cell[][], x: number, y: number, size: number): Cell[][] {
+export function applyDoubleFlag(
+  board: Cell[][],
+  x: number,
+  y: number,
+  size: number,
+): Cell[][] {
   const next = board.map((row) => row.map((cell) => ({ ...cell })));
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
@@ -41,8 +64,8 @@ export function applyDoubleFlag(board: Cell[][], x: number, y: number, size: num
       const nx = x + dx;
       const ny = y + dy;
       if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
-        if (next[ny][nx].isMine && next[ny][nx].state !== 'flagged') {
-          next[ny][nx].state = 'flagged';
+        if (next[ny][nx].isMine && next[ny][nx].state !== "flagged") {
+          next[ny][nx].state = "flagged";
         }
       }
     }
@@ -50,11 +73,15 @@ export function applyDoubleFlag(board: Cell[][], x: number, y: number, size: num
   return next;
 }
 
-export function getAutoRevealCells(board: Cell[][], size: number, count: number): [number, number][] {
+export function getAutoRevealCells(
+  board: Cell[][],
+  size: number,
+  count: number,
+): [number, number][] {
   const safe: [number, number][] = [];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      if (!board[y][x].isMine && board[y][x].state === 'hidden') {
+      if (!board[y][x].isMine && board[y][x].state === "hidden") {
         safe.push([x, y]);
       }
     }
@@ -64,11 +91,11 @@ export function getAutoRevealCells(board: Cell[][], size: number, count: number)
 }
 
 export function rarityColor(rarity: 1 | 2 | 3): string {
-  if (rarity === 1) return 'border-emerald-500 bg-emerald-950';
-  if (rarity === 2) return 'border-blue-500 bg-blue-950';
-  return 'border-violet-500 bg-violet-950';
+  if (rarity === 1) return "border-emerald-500 bg-emerald-950";
+  if (rarity === 2) return "border-blue-500 bg-blue-950";
+  return "border-violet-500 bg-violet-950";
 }
 
 export function rarityLabel(rarity: 1 | 2 | 3): string {
-  return '★'.repeat(rarity);
+  return "★".repeat(rarity);
 }

@@ -8,7 +8,7 @@ interface Props {
 
 export default function FloorClearScreen({ floor, onContinue }: Props) {
   useEffect(() => {
-    const t = setTimeout(onContinue, 1700);
+    const t = setTimeout(onContinue, 1000);
     return () => clearTimeout(t);
   }, [onContinue]);
 

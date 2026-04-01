@@ -2,6 +2,7 @@
   {
     "id": "xray",
     "name": "透視の目",
+    "icon": "👁",
     "description": "1回だけ指定セルの中身を安全に確認",
     "rarity": 2,
     "type": "active"
@@ -9,6 +10,7 @@
   {
     "id": "detector",
     "name": "地雷探知機",
+    "icon": "🔍",
     "description": "1回だけランダムな地雷1つにフラグを自動設置",
     "rarity": 2,
     "type": "active"
@@ -16,6 +18,7 @@
   {
     "id": "shield",
     "name": "シールド",
+    "icon": "🛡",
     "description": "次に地雷を踏んでも1回だけ耐える",
     "rarity": 3,
     "type": "active"
@@ -23,6 +26,7 @@
   {
     "id": "hourglass",
     "name": "時戻しの砂時計",
+    "icon": "⏳",
     "description": "地雷を踏んだ直後に1手戻せる",
     "rarity": 3,
     "type": "active"
@@ -30,6 +34,7 @@
   {
     "id": "whisper",
     "name": "数字の囁き",
+    "icon": "👂",
     "description": "次のフロアで最初に安全なセルを3つ自動で開く",
     "rarity": 1,
     "type": "passive"
@@ -37,6 +42,7 @@
   {
     "id": "amulet",
     "name": "幸運のお守り",
+    "icon": "🍀",
     "description": "次のフロアの地雷数を2つ減らす",
     "rarity": 1,
     "type": "passive"
@@ -44,6 +50,7 @@
   {
     "id": "doubleflag",
     "name": "ダブルフラグ",
+    "icon": "🚩",
     "description": "フラグを立てると隣接する地雷にも自動フラグ（1回）",
     "rarity": 2,
     "type": "active"
@@ -51,8 +58,33 @@
   {
     "id": "shrink",
     "name": "マップ縮小",
+    "icon": "🗜",
     "description": "次のフロアの盤面サイズを1段階小さくする",
     "rarity": 1,
+    "type": "passive"
+  },
+  {
+    "id": "speed",
+    "name": "スピード",
+    "icon": "⚡",
+    "description": "タイマーの進みが50%遅くなる",
+    "rarity": 2,
+    "type": "passive"
+  },
+  {
+    "id": "magnet",
+    "name": "磁石",
+    "icon": "🧲",
+    "description": "フロアクリア時のスキル選択肢が1つ多くなる",
+    "rarity": 2,
+    "type": "passive"
+  },
+  {
+    "id": "lucky",
+    "name": "幸運",
+    "icon": "💎",
+    "description": "スキル選択時に必ず★★★スキルが含まれる",
+    "rarity": 3,
     "type": "passive"
   }
 ]

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Skill } from "@/lib/types";
-import SkillCard from "./SkillCard";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
 
@@ -118,7 +117,15 @@ export default function GameOverScreen({
             <p className="text-xs text-gray-500 mb-2">取得スキル</p>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill, i) => (
-                <SkillCard key={i} skill={skill} compact />
+                <div
+                  key={i}
+                  className="flex items-center gap-1.5 bg-[#1E293B] border border-[#334155] rounded-lg px-2.5 py-1.5"
+                >
+                  <span className="text-base leading-none">{skill.icon}</span>
+                  <span className="text-xs font-bold text-[#E2E8F0]">
+                    {skill.name}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
