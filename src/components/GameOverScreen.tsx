@@ -12,6 +12,7 @@ interface Props {
   bestFloor: number;
   isNewRecord: boolean;
   revealedCount: number;
+  totalPlays: number;
   onRestart: () => void;
 }
 
@@ -30,18 +31,19 @@ export default function GameOverScreen({
   bestFloor,
   isNewRecord,
   revealedCount,
+  totalPlays,
   onRestart,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
-  const skillNames =
-    skills.length > 0 ? skills.map((s) => s.name).join(", ") : "なし";
+  const skillIcons =
+    skills.length > 0 ? skills.map((s) => s.icon).join("") : "なし";
   const shareText = [
-    "Mine Rogue ⛏",
+    "Mine Rogue ⛏💀",
     `到達: B${floor}F`,
-    `スキル: ${skillNames}`,
+    `スキル: ${skillIcons}`,
     `⏱ ${formatTime(timer)}`,
-    "",
+    "#MineRogue #ブラウザゲーム",
     "https://mine-rogue.vercel.app/",
   ].join("\n");
 
@@ -74,8 +76,8 @@ export default function GameOverScreen({
           GAME OVER
         </h2>
         {isNewRecord && (
-          <p className="text-yellow-400 font-bold mt-2 text-sm animate-pulse">
-            🎉 New Record!
+          <p className="text-yellow-400 font-black mt-2 text-base animate-pulse tracking-widest">
+            🎉 NEW RECORD!
           </p>
         )}
       </div>
@@ -132,12 +134,18 @@ export default function GameOverScreen({
         )}
 
         {/* Main CTA */}
-        <button
-          onClick={onRestart}
-          className="w-full bg-[#10B981] hover:bg-emerald-400 active:bg-emerald-600 text-white font-black py-4 rounded-2xl text-xl transition-colors shadow-lg shadow-emerald-500/20"
-        >
-          もう一度
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            onClick={onRestart}
+            className="w-full bg-[#10B981] hover:bg-emerald-400 active:bg-emerald-600 text-white font-black py-5 rounded-2xl text-2xl transition-colors shadow-xl shadow-emerald-500/30"
+            style={{ letterSpacing: "0.05em" }}
+          >
+            もう一度
+          </button>
+          <p className="text-xs text-gray-500">
+            次こそB{bestFloor + 1}Fを目指そう！
+          </p>
+        </div>
 
         {/* Share buttons */}
         <div className="flex gap-2">
@@ -155,6 +163,11 @@ export default function GameOverScreen({
           </button>
         </div>
 
+        {totalPlays > 0 && (
+          <p className="text-center text-xs text-gray-600">
+            通算 {totalPlays}回プレイ
+          </p>
+        )}
         <AdBanner />
         <CrossPromo />
       </div>

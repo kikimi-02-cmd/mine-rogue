@@ -15,7 +15,14 @@ import {
   applyDoubleFlag,
   getAutoRevealCells,
 } from "@/lib/skills";
-import { loadBestFloor, saveBestFloor } from "@/lib/storage";
+import {
+  loadBestFloor,
+  saveBestFloor,
+  incrementPlayCount,
+  addTotalRevealed,
+  trackSkills,
+  loadPlayCount,
+} from "@/lib/storage";
 import Header from "@/components/Header";
 import Board from "@/components/Board";
 import SkillBar from "@/components/SkillBar";
@@ -48,8 +55,10 @@ export default function Page() {
   const [xrayMode, setXrayMode] = useState(false);
   const [flagMode, setFlagMode] = useState(false);
   const [isNewRecord, setIsNewRecord] = useState(false);
+  const [totalPlays, setTotalPlays] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hasSpeedRef = useRef(false);
+  const gameOverTrackedRef = useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -61,6 +70,21 @@ export default function Page() {
   useEffect(() => {
     hasSpeedRef.current = state.skills.some((s) => s.id === "speed");
   }, [state.skills]);
+
+  // Track stats once per game over
+  useEffect(() => {
+    if (!mounted) return;
+    if (state.gamePhase === "gameOver" && !gameOverTrackedRef.current) {
+      gameOverTrackedRef.current = true;
+      incrementPlayCount();
+      const revealed = state.board
+        .flat()
+        .filter((c) => c.state === "revealed" && !c.isMine).length;
+      addTotalRevealed(revealed);
+      trackSkills(state.skills);
+      setTotalPlays(loadPlayCount());
+    }
+  }, [mounted, state.gamePhase, state.board, state.skills]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -253,6 +277,7 @@ export default function Page() {
     setXrayMode(false);
     setFlagMode(false);
     setActiveSkillId(undefined);
+    gameOverTrackedRef.current = false;
     setState((prev) => createInitialState(prev.bestFloor));
   }, []);
 
@@ -275,6 +300,7 @@ export default function Page() {
           bestFloor={state.bestFloor}
           isNewRecord={isNewRecord}
           revealedCount={revealedCount}
+          totalPlays={totalPlays}
           onRestart={handleRestart}
         />
       </div>
@@ -334,6 +360,11 @@ export default function Page() {
               xrayMode={xrayMode}
             />
           </div>
+          {state.firstClick && state.floor === 1 && (
+            <p className="text-xs text-gray-600 text-center">
+              ベスト: B{state.bestFloor}F
+            </p>
+          )}
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => setFlagMode(false)}
