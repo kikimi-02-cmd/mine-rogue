@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import AdUnit from "@/components/AdUnit";
 
 interface Props {
   bestFloor: number;
@@ -72,6 +73,7 @@ export default function TitleScreen({
             通算 {totalPlays}回プレイ
           </p>
         )}
+        <AdUnit className="mt-1" />
       </div>
     </div>
   );
