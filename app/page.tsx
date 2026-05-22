@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { GameState, Skill } from "@/lib/types";
+import type { GameState, GamePhase, Skill } from "@/lib/types";
 import {
   createEmptyBoard,
   generateBoard,
@@ -29,8 +29,13 @@ import SkillBar from "@/components/SkillBar";
 import SkillSelect from "@/components/SkillSelect";
 import FloorClearScreen from "@/components/FloorClearScreen";
 import GameOverScreen from "@/components/GameOverScreen";
+import TitleScreen from "@/components/TitleScreen";
+import StatsScreen from "@/components/StatsScreen";
 
-function createInitialState(bestFloor: number): GameState {
+function createInitialState(
+  bestFloor: number,
+  phase: GamePhase = "playing",
+): GameState {
   const { size, mineCount } = getFloorConfig(1);
   return {
     floor: 1,
@@ -38,7 +43,7 @@ function createInitialState(bestFloor: number): GameState {
     boardSize: size,
     mineCount,
     skills: [],
-    gamePhase: "playing",
+    gamePhase: phase,
     timer: 0,
     bestFloor,
     firstClick: true,
@@ -49,7 +54,9 @@ function createInitialState(bestFloor: number): GameState {
 
 export default function Page() {
   const [mounted, setMounted] = useState(false);
-  const [state, setState] = useState<GameState>(() => createInitialState(1));
+  const [state, setState] = useState<GameState>(() =>
+    createInitialState(1, "title"),
+  );
   const [skillChoices, setSkillChoices] = useState<Skill[]>([]);
   const [activeSkillId, setActiveSkillId] = useState<string | undefined>();
   const [xrayMode, setXrayMode] = useState(false);
@@ -62,8 +69,8 @@ export default function Page() {
 
   useEffect(() => {
     setMounted(true);
-    const best = loadBestFloor();
-    setState(createInitialState(best));
+    setState(createInitialState(loadBestFloor(), "title"));
+    setTotalPlays(loadPlayCount());
   }, []);
 
   // Keep hasSpeedRef in sync for use in the timer effect
@@ -272,27 +279,73 @@ export default function Page() {
     }
   }, []);
 
-  const handleRestart = useCallback(() => {
+  const resetTransientState = useCallback(() => {
     setIsNewRecord(false);
     setXrayMode(false);
     setFlagMode(false);
     setActiveSkillId(undefined);
     gameOverTrackedRef.current = false;
-    setState((prev) => createInitialState(prev.bestFloor));
+  }, []);
+
+  const handleStart = useCallback(() => {
+    resetTransientState();
+    setState((prev) => createInitialState(prev.bestFloor, "playing"));
+  }, [resetTransientState]);
+
+  const handleRestart = useCallback(() => {
+    resetTransientState();
+    setState((prev) => createInitialState(prev.bestFloor, "playing"));
+  }, [resetTransientState]);
+
+  const handleBackToTitle = useCallback(() => {
+    resetTransientState();
+    setState((prev) => createInitialState(prev.bestFloor, "title"));
+    setTotalPlays(loadPlayCount());
+  }, [resetTransientState]);
+
+  const handleShowStats = useCallback(() => {
+    setState((prev) => ({ ...prev, gamePhase: "stats" }));
   }, []);
 
   if (!mounted) {
     return <div className="h-[100dvh] bg-[#0A1628]" />;
   }
 
+  // Title
+  if (state.gamePhase === "title") {
+    return (
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto">
+        <TitleScreen
+          bestFloor={state.bestFloor}
+          totalPlays={totalPlays}
+          onStart={handleStart}
+          onShowStats={handleShowStats}
+        />
+      </div>
+    );
+  }
+
+  // Stats
+  if (state.gamePhase === "stats") {
+    return (
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
+        <StatsScreen onBack={handleBackToTitle} />
+      </div>
+    );
+  }
+
   const flagCount = countFlags(state.board, state.boardSize);
   const revealedCount = state.board
     .flat()
     .filter((c) => c.state === "revealed" && !c.isMine).length;
+  const safeTotal = state.boardSize * state.boardSize - state.mineCount;
+  const progress =
+    state.firstClick || safeTotal <= 0 ? 0 : revealedCount / safeTotal;
+
   // Game Over
   if (state.gamePhase === "gameOver") {
     return (
-      <div className="h-[100dvh] bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <GameOverScreen
           floor={state.floor}
           skills={state.skills}
@@ -302,6 +355,7 @@ export default function Page() {
           revealedCount={revealedCount}
           totalPlays={totalPlays}
           onRestart={handleRestart}
+          onBackToTitle={handleBackToTitle}
         />
       </div>
     );
@@ -310,7 +364,7 @@ export default function Page() {
   // Skill Select
   if (state.gamePhase === "skillSelect") {
     return (
-      <div className="h-[100dvh] bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <SkillSelect
           choices={skillChoices}
           onSelect={handleSkillSelect}
@@ -322,12 +376,13 @@ export default function Page() {
 
   // Playing / Cleared
   return (
-    <div className="h-[100dvh] flex flex-col bg-[#0A1628] text-[#E2E8F0] max-w-sm mx-auto overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-hidden">
       <Header
         floor={state.floor}
         mineCount={state.mineCount}
         flagCount={flagCount}
         timer={state.timer}
+        progress={progress}
       />
       <SkillBar
         skills={state.skills}
@@ -343,12 +398,14 @@ export default function Page() {
             onContinue={handleFloorClearContinue}
           />
         )}
-        <div className="flex flex-col items-center" style={{ gap: "8px" }}>
+        <div className="flex flex-col items-center" style={{ gap: "10px" }}>
           <div
-            className="rounded-lg p-1.5"
+            className="rounded-xl p-1.5"
             style={{
-              background: "#1E293B",
-              border: "1px solid rgba(51,65,85,0.5)",
+              background: "#15233A",
+              border: "1px solid rgba(30,58,95,0.7)",
+              boxShadow:
+                "0 8px 24px -10px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.04)",
             }}
           >
             <Board
@@ -361,8 +418,8 @@ export default function Page() {
             />
           </div>
           {state.firstClick && state.floor === 1 && (
-            <p className="text-xs text-gray-600 text-center">
-              ベスト: B{state.bestFloor}F
+            <p className="text-xs text-[#5B7799] text-center">
+              安全そうなマスをタップして開始 ・ ベスト B{state.bestFloor}F
             </p>
           )}
           <div className="flex items-center justify-center gap-4">
@@ -370,8 +427,8 @@ export default function Page() {
               onClick={() => setFlagMode(false)}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
                 !flagMode
-                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
-                  : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/30 scale-105"
+                  : "bg-[#16243A] text-[#64748B] hover:bg-[#1E3350] hover:text-gray-300"
               }`}
             >
               ⛏ 掘る
@@ -380,8 +437,8 @@ export default function Page() {
               onClick={() => setFlagMode(true)}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-base transition-all ${
                 flagMode
-                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/20"
-                  : "bg-[#1E293B] text-[#64748B] hover:bg-[#243350] hover:text-gray-300"
+                  ? "bg-[#10B981] text-white shadow-lg shadow-emerald-500/30 scale-105"
+                  : "bg-[#16243A] text-[#64748B] hover:bg-[#1E3350] hover:text-gray-300"
               }`}
             >
               🚩 旗

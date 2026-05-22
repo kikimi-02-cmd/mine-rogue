@@ -89,13 +89,3 @@ export function getAutoRevealCells(
   const shuffled = safe.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
 }
-
-export function rarityColor(rarity: 1 | 2 | 3): string {
-  if (rarity === 1) return "border-emerald-500 bg-emerald-950";
-  if (rarity === 2) return "border-blue-500 bg-blue-950";
-  return "border-violet-500 bg-violet-950";
-}
-
-export function rarityLabel(rarity: 1 | 2 | 3): string {
-  return "★".repeat(rarity);
-}

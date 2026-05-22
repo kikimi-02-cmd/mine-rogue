@@ -16,7 +16,13 @@ export interface Skill {
   used: boolean;
 }
 
-export type GamePhase = "playing" | "cleared" | "skillSelect" | "gameOver";
+export type GamePhase =
+  | "title"
+  | "playing"
+  | "cleared"
+  | "skillSelect"
+  | "gameOver"
+  | "stats";
 
 export interface GameState {
   floor: number;

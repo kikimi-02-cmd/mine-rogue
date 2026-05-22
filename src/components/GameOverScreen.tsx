@@ -14,6 +14,7 @@ interface Props {
   revealedCount: number;
   totalPlays: number;
   onRestart: () => void;
+  onBackToTitle: () => void;
 }
 
 function formatTime(seconds: number): string {
@@ -33,6 +34,7 @@ export default function GameOverScreen({
   revealedCount,
   totalPlays,
   onRestart,
+  onBackToTitle,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -63,20 +65,21 @@ export default function GameOverScreen({
   }
 
   return (
-    <div className="min-h-full flex flex-col bg-[#0A1628]">
+    <div className="min-h-full flex flex-col bg-arena">
       {/* Header with red overlay */}
       <div
         className="py-8 text-center"
         style={{
-          background: "linear-gradient(180deg, #1A0A0A 0%, #0A1628 100%)",
+          background:
+            "radial-gradient(ellipse 110% 80% at 50% 0%, rgba(127,29,29,0.55), transparent 70%)",
         }}
       >
-        <p className="text-6xl mb-3">💀</p>
+        <p className="text-6xl mb-3 animate-pop-in">💀</p>
         <h2 className="text-3xl font-black text-white tracking-[0.2em]">
           GAME OVER
         </h2>
         {isNewRecord && (
-          <p className="text-yellow-400 font-black mt-2 text-base animate-pulse tracking-widest">
+          <p className="mt-2 text-base font-black tracking-widest text-yellow-400 animate-record-glow">
             🎉 NEW RECORD!
           </p>
         )}
@@ -84,31 +87,29 @@ export default function GameOverScreen({
 
       <div className="flex flex-col gap-4 px-4 pb-6">
         {/* Stats grid */}
-        <div className="bg-[#0F172A] rounded-2xl border border-[#1E3A5F] overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-[#1E3A5F] bg-[#0F1B2E]">
           <div className="grid grid-cols-2 divide-x divide-[#1E3A5F]">
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1.5">到達フロア</p>
-              <p className="text-2xl font-black text-[#10B981]">B{floor}F</p>
+              <p className="mb-1.5 text-xs text-gray-500">到達フロア</p>
+              <p className="text-2xl font-black text-emerald-400">B{floor}F</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1.5">経過時間</p>
-              <p className="text-2xl font-black font-mono text-[#E2E8F0]">
+              <p className="mb-1.5 text-xs text-gray-500">経過時間</p>
+              <p className="font-mono text-2xl font-black text-[#E2E8F0]">
                 {formatTime(timer)}
               </p>
             </div>
           </div>
-          <div className="border-t border-[#1E3A5F] grid grid-cols-2 divide-x divide-[#1E3A5F]">
+          <div className="grid grid-cols-2 divide-x divide-[#1E3A5F] border-t border-[#1E3A5F]">
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1.5">開封セル数</p>
+              <p className="mb-1.5 text-xs text-gray-500">開封セル数</p>
               <p className="text-2xl font-black text-[#E2E8F0]">
                 {revealedCount}
               </p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-xs text-gray-500 mb-1.5">ベスト記録</p>
-              <p className="text-2xl font-black text-yellow-400">
-                B{bestFloor}F
-              </p>
+              <p className="mb-1.5 text-xs text-gray-500">ベスト記録</p>
+              <p className="text-2xl font-black text-yellow-400">B{bestFloor}F</p>
             </div>
           </div>
         </div>
@@ -116,12 +117,12 @@ export default function GameOverScreen({
         {/* Acquired skills */}
         {skills.length > 0 && (
           <div>
-            <p className="text-xs text-gray-500 mb-2">取得スキル</p>
+            <p className="mb-2 text-xs text-gray-500">取得スキル</p>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-1.5 bg-[#1E293B] border border-[#334155] rounded-lg px-2.5 py-1.5"
+                  className="flex items-center gap-1.5 rounded-lg border border-[#334155] bg-[#16243A] px-2.5 py-1.5"
                 >
                   <span className="text-base leading-none">{skill.icon}</span>
                   <span className="text-xs font-bold text-[#E2E8F0]">
@@ -137,7 +138,7 @@ export default function GameOverScreen({
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={onRestart}
-            className="w-full bg-[#10B981] hover:bg-emerald-400 active:bg-emerald-600 text-white font-black py-5 rounded-2xl text-2xl transition-colors shadow-xl shadow-emerald-500/30"
+            className="w-full rounded-2xl bg-[#10B981] py-5 text-2xl font-black text-white shadow-xl shadow-emerald-500/30 transition-colors hover:bg-emerald-400 active:bg-emerald-600"
             style={{ letterSpacing: "0.05em" }}
           >
             もう一度
@@ -151,17 +152,24 @@ export default function GameOverScreen({
         <div className="flex gap-2">
           <button
             onClick={handleShare}
-            className="flex-1 py-2.5 rounded-xl bg-[#1E293B] hover:bg-[#243350] border border-[#334155] text-[#E2E8F0] font-bold text-sm transition-colors"
+            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
           >
             {copied ? "コピーしました！" : "📋 結果をシェア"}
           </button>
           <button
             onClick={handleXShare}
-            className="flex-1 py-2.5 rounded-xl bg-[#1E293B] hover:bg-[#243350] border border-[#334155] text-[#E2E8F0] font-bold text-sm transition-colors"
+            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
           >
             𝕏 でシェア
           </button>
         </div>
+
+        <button
+          onClick={onBackToTitle}
+          className="self-center text-xs text-gray-500 transition-colors hover:text-gray-300"
+        >
+          🏠 タイトルへ戻る
+        </button>
 
         {totalPlays > 0 && (
           <p className="text-center text-xs text-gray-600">
