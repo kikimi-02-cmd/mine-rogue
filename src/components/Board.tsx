@@ -19,7 +19,7 @@ export default function Board({
   xrayMode,
 }: Props) {
   const maxWidth = 340;
-  const gap = 1;
+  const gap = 2;
   const cellSize = Math.floor((maxWidth - gap * (boardSize - 1)) / boardSize);
 
   return (

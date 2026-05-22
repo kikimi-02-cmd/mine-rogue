@@ -39,7 +39,7 @@ export function addTotalRevealed(count: number): void {
   localStorage.setItem(TOTAL_REVEALED_KEY, String(loadTotalRevealed() + count));
 }
 
-function loadSkillCounts(): Record<string, number> {
+export function loadSkillCounts(): Record<string, number> {
   if (typeof window === "undefined") return {};
   const val = localStorage.getItem(SKILL_COUNTS_KEY);
   try {
