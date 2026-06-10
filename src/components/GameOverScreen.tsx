@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Skill } from "@/lib/types";
 import CrossPromo from "./CrossPromo";
-import AdBanner from "./AdBanner";
+import AdUnit from "./AdUnit";
 
 interface Props {
   floor: number;
@@ -176,7 +176,7 @@ export default function GameOverScreen({
             通算 {totalPlays}回プレイ
           </p>
         )}
-        <AdBanner />
+        <AdUnit />
         <CrossPromo />
       </div>
     </div>
