@@ -8,7 +8,7 @@ import {
   loadSkillCounts,
 } from "@/lib/storage";
 import CrossPromo from "./CrossPromo";
-import AdBanner from "./AdBanner";
+import AdUnit from "./AdUnit";
 
 interface Props {
   onBack: () => void;
@@ -107,7 +107,7 @@ export default function StatsScreen({ onBack }: Props) {
       </button>
 
       <div className="mt-4">
-        <AdBanner />
+        <AdUnit />
       </div>
       <CrossPromo />
     </div>
