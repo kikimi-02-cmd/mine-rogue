@@ -1,8 +1,8 @@
 {
   "schema": "uaif/config-v1",
   "product": "mine-rogue",
-  "enabled": false,
-  "mode": "shadow",
+  "enabled": true,
+  "mode": "live",
   "autonomy": "balanced",
   "cadence_cron": "0 21 * * 6",
   "north_star": "到達フロア数の中央値：1ランあたりにプレイヤーが到達できるフロア数（スキルシステムの面白さの代理指標）",
