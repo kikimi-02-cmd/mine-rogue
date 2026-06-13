@@ -1,0 +1,28 @@
+{
+  "schema": "uaif/config-v1",
+  "product": "mine-rogue",
+  "enabled": false,
+  "mode": "shadow",
+  "autonomy": "balanced",
+  "cadence_cron": "0 21 * * 6",
+  "north_star": "到達フロア数の中央値：1ランあたりにプレイヤーが到達できるフロア数（スキルシステムの面白さの代理指標）",
+  "guardrails": [
+    "パーマデス仕様を廃止・緩和しない（地雷を踏んだら即ゲームオーバー＋最初から）",
+    "フロア構成テーブル（サイズ・地雷数）を仕様通り維持する",
+    "マインスイーパーのコアルール（数字=隣接地雷数）を変更しない",
+    "localStorage のベストスコア保存スキーマを破壊しない",
+    "スキル選択肢は必ず3択であること"
+  ],
+  "verify": {
+    "install": "npm ci",
+    "build": "npm run build",
+    "lint": "npm run lint",
+    "test": "",
+    "typecheck": ""
+  },
+  "telemetry": ["recent commits", "open issues", "lint", "UX 静的診断"],
+  "token_budget_usd": 1.5,
+  "max_open_prs": 1,
+  "irreversible_keywords": ["price", "pricing", "payment", "delete", "drop table", "schema", "auth", "public claim", "spend"],
+  "council_route": "honnex.app/admin/council"
+}
