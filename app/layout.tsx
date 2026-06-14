@@ -1,11 +1,30 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const SITE_URL = "https://mine-rogue.vercel.app";
+const TITLE = "Mine Rogue | マインスイーパー×ローグライク";
+const DESCRIPTION =
+  "マインスイーパーにローグライク要素を追加！フロアをクリアしてスキルを獲得、地雷を踏んだら全てリセット。どこまで潜れるか挑戦しよう。";
+
 export const metadata: Metadata = {
-  title: "Mine Rogue | マインスイーパー×ローグライク",
-  description:
-    "マインスイーパーにローグライク要素を追加！フロアをクリアしてスキルを獲得、地雷を踏んだら全てリセット。どこまで潜れるか挑戦しよう。",
+  metadataBase: new URL(SITE_URL),
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.json",
+  applicationName: "Mine Rogue",
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    url: SITE_URL,
+    siteName: "Mine Rogue",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
