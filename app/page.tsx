@@ -23,6 +23,7 @@ import {
   trackSkills,
   loadPlayCount,
 } from "@/lib/storage";
+import { trackEvent } from "@/lib/gtag";
 import Header from "@/components/Header";
 import Board from "@/components/Board";
 import SkillBar from "@/components/SkillBar";
@@ -89,6 +90,12 @@ export default function Page() {
         .filter((c) => c.state === "revealed" && !c.isMine).length;
       addTotalRevealed(revealed);
       trackSkills(state.skills);
+      trackEvent("game_over", {
+        floor: state.floor,
+        revealed,
+        skill_count: state.skills.length,
+        timer: state.timer,
+      });
       setTotalPlays(loadPlayCount());
     }
   }, [mounted, state.gamePhase, state.board, state.skills]);
@@ -226,6 +233,7 @@ export default function Page() {
   }, []);
 
   const handleFloorClearContinue = useCallback(() => {
+    trackEvent("floor_clear", { floor: state.floor });
     const hasMagnet = state.skills.some((s) => s.id === "magnet");
     const hasLucky = state.skills.some((s) => s.id === "lucky");
     const count = hasMagnet ? 4 : 3;
@@ -289,11 +297,13 @@ export default function Page() {
 
   const handleStart = useCallback(() => {
     resetTransientState();
+    trackEvent("game_start", { source: "title" });
     setState((prev) => createInitialState(prev.bestFloor, "playing"));
   }, [resetTransientState]);
 
   const handleRestart = useCallback(() => {
     resetTransientState();
+    trackEvent("game_start", { source: "restart" });
     setState((prev) => createInitialState(prev.bestFloor, "playing"));
   }, [resetTransientState]);
 

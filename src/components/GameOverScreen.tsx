@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Skill } from "@/lib/types";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
+import { trackEvent } from "@/lib/gtag";
 
 interface Props {
   floor: number;
@@ -60,6 +61,7 @@ export default function GameOverScreen({
   }
 
   function handleXShare() {
+    trackEvent("share", { method: "twitter", floor });
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
