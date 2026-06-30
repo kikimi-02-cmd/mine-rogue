@@ -4,7 +4,7 @@
   "enabled": true,
   "mode": "live",
   "autonomy": "balanced",
-  "cadence_cron": "0 21 * * 6",
+  "cadence_cron": "40 21 * * 6",
   "north_star": "到達フロア数の中央値：1ランあたりにプレイヤーが到達できるフロア数（スキルシステムの面白さの代理指標）",
   "guardrails": [
     "パーマデス仕様を廃止・緩和しない（地雷を踏んだら即ゲームオーバー＋最初から）",
