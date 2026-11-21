@@ -1,5 +1,6 @@
 'use client';
 
+import { IS_DIST } from '@/lib/dist';
 import { useEffect, useRef } from 'react';
 
 declare global {
@@ -16,6 +17,7 @@ export default function AdUnit({ className = '' }: Props) {
   const pushed = useRef(false);
 
   useEffect(() => {
+    if (IS_DIST) return;
     if (pushed.current) return;
     pushed.current = true;
     try {
@@ -25,6 +27,8 @@ export default function AdUnit({ className = '' }: Props) {
     }
   }, []);
 
+  // 配信版では広告を出さない
+  if (IS_DIST) return null;
   return (
     <div className={`overflow-hidden ${className}`}>
       <ins

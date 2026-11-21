@@ -5,6 +5,10 @@ import type { Skill } from "@/lib/types";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
 import { trackEvent } from "@/lib/gtag";
+import { EVENTS, bucketFloor } from "@/lib/events";
+import { formatTime, shareResult, saveResultCard } from "@/lib/share";
+import skillsData from "@/data/skills.json";
+import type { TitleDef, UnlockDef } from "@/lib/progress";
 
 interface Props {
   floor: number;
@@ -14,16 +18,13 @@ interface Props {
   isNewRecord: boolean;
   revealedCount: number;
   totalPlays: number;
+  /** 毎日の挑戦なら「デイリー #N」 */
+  dailyLabel?: string;
+  isDaily?: boolean;
+  newUnlocks?: UnlockDef[];
+  newTitles?: TitleDef[];
   onRestart: () => void;
   onBackToTitle: () => void;
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
 }
 
 export default function GameOverScreen({
@@ -34,36 +35,35 @@ export default function GameOverScreen({
   isNewRecord,
   revealedCount,
   totalPlays,
+  dailyLabel,
+  isDaily = false,
+  newUnlocks = [],
+  newTitles = [],
   onRestart,
   onBackToTitle,
 }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const result = { floor, skills, timer, isNewRecord, label: dailyLabel };
 
-  const skillIcons =
-    skills.length > 0 ? skills.map((s) => s.icon).join("") : "なし";
-  const shareText = [
-    "Mine Rogue ⛏💀",
-    `到達: B${floor}F`,
-    `スキル: ${skillIcons}`,
-    `⏱ ${formatTime(timer)}`,
-    "#MineRogue #ブラウザゲーム",
-    "https://mine-rogue.vercel.app/",
-  ].join("\n");
-
-  function handleShare() {
-    navigator.clipboard
-      .writeText(shareText)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {});
+  function flash(msg: string) {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 2500);
   }
 
-  function handleXShare() {
-    trackEvent("share", { method: "twitter", floor });
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  async function handleShare() {
+    const outcome = await shareResult(result);
+    if (outcome === "shared" || outcome === "fallback") {
+      trackEvent(EVENTS.shareCard, { method: outcome, floor_bucket: bucketFloor(floor) });
+    }
+    if (outcome === "fallback") flash("画像を保存し、文をコピーしました");
+    if (outcome === "blocked") flash("共有できませんでした");
+  }
+
+  async function handleSave() {
+    if (await saveResultCard(result)) {
+      trackEvent(EVENTS.shareCard, { method: "save", floor_bucket: bucketFloor(floor) });
+      flash("画像を保存しました");
+    }
   }
 
   return (
@@ -80,6 +80,11 @@ export default function GameOverScreen({
         <h2 className="text-3xl font-black text-white tracking-[0.2em]">
           GAME OVER
         </h2>
+        {isDaily && dailyLabel && (
+          <p className="mt-2 text-sm font-black text-sky-300">
+            📅 {dailyLabel} の記録を残しました
+          </p>
+        )}
         {isNewRecord && (
           <p className="mt-2 text-base font-black tracking-widest text-yellow-400 animate-record-glow">
             🎉 NEW RECORD!
@@ -116,6 +121,27 @@ export default function GameOverScreen({
           </div>
         </div>
 
+        {/* ラン同士で残るもの: 新しい称号・解放 */}
+        {(newTitles.length > 0 || newUnlocks.length > 0) && (
+          <div className="animate-pop-in rounded-2xl border border-yellow-500/40 bg-[#2A2410] p-3 text-center">
+            {newTitles.map((t) => (
+              <p key={t.floor} className="text-sm font-black text-yellow-200">
+                {t.icon} 称号「{t.name}」を手に入れた！
+              </p>
+            ))}
+            {newUnlocks.map((u) => {
+              const meta = (skillsData as { id: string; name: string; icon: string }[]).find(
+                (m) => m.id === u.skillId,
+              );
+              return (
+                <p key={u.skillId} className="text-sm font-black text-emerald-300">
+                  🔓 新スキル「{meta?.icon} {meta?.name}」が選択肢に入ります
+                </p>
+              );
+            })}
+          </div>
+        )}
+
         {/* Acquired skills */}
         {skills.length > 0 && (
           <div>
@@ -150,20 +176,25 @@ export default function GameOverScreen({
           </p>
         </div>
 
-        {/* Share buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={handleShare}
-            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-          >
-            {copied ? "コピーしました！" : "📋 結果をシェア"}
-          </button>
-          <button
-            onClick={handleXShare}
-            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-          >
-            𝕏 でシェア
-          </button>
+        {/* Share */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleShare}
+              className="flex-[2] rounded-xl border border-emerald-500/50 bg-[#16243A] py-3 text-sm font-black text-emerald-300 transition-colors hover:bg-[#1E3350]"
+            >
+              📤 結果をシェア
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
+            >
+              🖼 画像を保存
+            </button>
+          </div>
+          <p className="h-4 text-center text-xs text-emerald-400" aria-live="polite">
+            {notice ?? ""}
+          </p>
         </div>
 
         <button

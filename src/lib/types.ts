@@ -22,7 +22,8 @@ export type GamePhase =
   | "cleared"
   | "skillSelect"
   | "gameOver"
-  | "stats";
+  | "stats"
+  | "codex";
 
 export interface GameState {
   floor: number;
@@ -36,4 +37,12 @@ export interface GameState {
   firstClick: boolean;
   pendingMineReduction: number;
   pendingAutoReveal: number;
+  /** normal = ふつうのラン / daily = 毎日の挑戦（日付のたね） / deep = 深層モード */
+  mode: RunMode;
+  /** 毎日の挑戦の日付（YYYY-MM-DD） */
+  dateKey: string | null;
+  /** 灯り（最初のフロアで安全なマスを開ける回数） */
+  lanterns: number;
 }
+
+export type RunMode = "normal" | "daily" | "deep";

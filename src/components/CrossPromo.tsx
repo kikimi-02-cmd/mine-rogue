@@ -1,3 +1,5 @@
+import { IS_DIST } from "@/lib/dist";
+
 const APPS = [
   {
     name: 'ポケモジ',
@@ -23,6 +25,8 @@ const APPS = [
 ];
 
 export default function CrossPromo() {
+  // 配信版では外部へのリンクを出さない
+  if (IS_DIST) return null;
   return (
     <div className="mt-4 px-4">
       <p className="text-xs font-bold text-gray-500 mb-2">おすすめアプリ</p>
