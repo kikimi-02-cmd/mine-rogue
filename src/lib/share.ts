@@ -3,7 +3,8 @@ import { guardShareText } from "./shareGuard";
 import { IS_DIST } from "./dist";
 
 export const SITE_URL = "https://mine-rogue.vercel.app/";
-export const HASHTAGS = ["#MineRogue", "#ブラウザゲーム"];
+/** ハッシュタグはゲーム名の 1 つに固定（ほかのタグは足さない） */
+export const HASHTAG = "#MineRogue";
 
 export function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -29,7 +30,7 @@ export function buildShareText(r: ShareResult): string {
     `到達: B${r.floor}F${r.isNewRecord ? " 🎉自己ベスト" : ""}`,
     `スキル: ${icons}`,
     `⏱ ${formatTime(r.timer)}`,
-    HASHTAGS.join(" "),
+    HASHTAG,
     // 配信版では外部へのリンクを入れない
     ...(IS_DIST ? [] : [SITE_URL]),
   ].join("\n");
@@ -154,7 +155,7 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
   ctx.font = `900 40px ${FONT}`;
   ctx.fillStyle = "#04261A";
   ctx.fillText(
-    IS_DIST ? HASHTAGS[0] : `${HASHTAGS[0]}   mine-rogue.vercel.app`,
+    IS_DIST ? HASHTAG : `${HASHTAG}   mine-rogue.vercel.app`,
     W / 2,
     H - 55,
   );
