@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { IS_DIST } from "@/lib/dist";
+import NoKeyScroll from "@/components/NoKeyScroll";
 
 const SITE_URL = "https://mine-rogue.vercel.app";
-const TITLE = "Mine Rogue | マインスイーパー×ローグライク";
+const TITLE = "Mine Rogue｜地雷の盤を潜るローグライク";
 const DESCRIPTION =
-  "マインスイーパーにローグライク要素を追加！フロアをクリアしてスキルを獲得、地雷を踏んだら全てリセット。どこまで潜れるか挑戦しよう。";
+  "マインスイーパーのルールで地下へ潜るローグライク。フロアを開けるたびにスキルを1つ選び、地雷を踏んだら最初から。毎日の挑戦・深層モード・スキル図鑑つき。登録不要・無料でブラウザですぐ遊べます。";
 
-export const metadata: Metadata = {
+const SHARE_METADATA: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: TITLE,
-  description: DESCRIPTION,
-  manifest: "/manifest.json",
-  applicationName: "Mine Rogue",
   openGraph: {
     type: "website",
     locale: "ja_JP",
@@ -25,6 +23,15 @@ export const metadata: Metadata = {
     title: TITLE,
     description: DESCRIPTION,
   },
+};
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  manifest: "/manifest.json",
+  applicationName: "Mine Rogue",
+  // 配信版はサイトの外に置くので、サイトへのリンクを含む共有用の情報は付けない
+  ...(IS_DIST ? {} : SHARE_METADATA),
 };
 
 export default function RootLayout({
@@ -46,6 +53,8 @@ export default function RootLayout({
           content="black-translucent"
         />
         <link rel="apple-touch-icon" href="/icon-192.png" />
+        {!IS_DIST && (
+        <>
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9336081041068058"
@@ -62,8 +71,13 @@ export default function RootLayout({
             `,
           }}
         />
+        </>
+        )}
       </head>
-      <body className="antialiased bg-[#0A1628]">{children}</body>
+      <body className="antialiased bg-[#0A1628]">
+        {IS_DIST && <NoKeyScroll />}
+        {children}
+      </body>
     </html>
   );
 }

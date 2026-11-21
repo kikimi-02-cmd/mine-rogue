@@ -1,4 +1,5 @@
 'use client';
+import { IS_DIST } from '@/lib/dist';
 import { useEffect } from 'react';
 
 declare global {
@@ -9,6 +10,7 @@ declare global {
 
 export default function AdBanner() {
   useEffect(() => {
+    if (IS_DIST) return;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
@@ -16,6 +18,8 @@ export default function AdBanner() {
     }
   }, []);
 
+  // 配信版では広告を出さない
+  if (IS_DIST) return null;
   return (
     <div className="w-full overflow-hidden">
       <ins

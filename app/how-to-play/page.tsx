@@ -4,7 +4,7 @@ import AdBanner from "@/components/AdBanner";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Mine Rogueの遊び方 | マインスイーパー×ローグライク",
+  title: "Mine Rogueの遊び方｜地雷の盤を潜るローグライク",
   description:
     "Mine Rogueの遊び方を解説。マインスイーパーとローグライクを融合した無料ブラウザゲームです。地雷を避けてフロアを踏破し、スキルを獲得しながらどこまで深く潜れるか挑戦しよう。",
 };

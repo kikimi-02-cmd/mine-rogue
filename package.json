@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --no-warnings --test 'tests/*.test.mjs'",
+    "dist": "bash scripts/build-dist.sh",
+    "og": "NODE_PATH=$(npm root -g) node scripts/make-og.mjs"
   },
   "dependencies": {
     "next": "16.4.5",

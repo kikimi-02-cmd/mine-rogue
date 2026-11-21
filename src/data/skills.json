@@ -86,5 +86,37 @@
     "description": "スキル選択時に必ず★★★スキルが含まれる",
     "rarity": 3,
     "type": "passive"
+  },
+  {
+    "id": "candle",
+    "name": "ろうそく",
+    "icon": "🕯",
+    "description": "1回だけ安全なマスを1つ開ける",
+    "rarity": 1,
+    "type": "active"
+  },
+  {
+    "id": "compass",
+    "name": "羅針盤",
+    "icon": "🧭",
+    "description": "次のフロアから毎回、安全なマスを2つ自動で開く",
+    "rarity": 2,
+    "type": "passive"
+  },
+  {
+    "id": "radar",
+    "name": "レーダー",
+    "icon": "📡",
+    "description": "1回だけ地雷を最大3つ旗で示す",
+    "rarity": 3,
+    "type": "active"
+  },
+  {
+    "id": "phoenix",
+    "name": "不死鳥の羽",
+    "icon": "🪶",
+    "description": "地雷を踏んでも1回だけ耐え、そのマスに旗が立つ",
+    "rarity": 3,
+    "type": "active"
   }
 ]
