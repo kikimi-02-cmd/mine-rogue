@@ -84,3 +84,14 @@ test("連続の日数の丸め", () => {
   assert.equal(bucketStreak(5), "4-7");
   assert.equal(bucketStreak(40), "31+");
 });
+
+test("ログイン報酬の段は先に全部見え、lanternsForStreak と一致する", async () => {
+  const { lanternLadder, lanternsForStreak, MAX_LANTERNS } = await import("../src/lib/daily.ts");
+  const ladder = lanternLadder();
+  assert.equal(ladder.length, MAX_LANTERNS);
+  assert.equal(ladder[ladder.length - 1].toDay, null);
+  for (const s of ladder) {
+    assert.equal(lanternsForStreak(s.fromDay), s.lanterns);
+    if (s.toDay !== null) assert.equal(lanternsForStreak(s.toDay), s.lanterns);
+  }
+});

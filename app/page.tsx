@@ -191,7 +191,8 @@ export default function Page() {
 
     // その日はじめて開いたら: 連続の日数を数え、ログイン報酬（灯り）を渡す
     const today = localDateKey();
-    const v = registerVisit(loadStreak(), today);
+    const prevStreak = loadStreak();
+    const v = registerVisit(prevStreak, today);
     saveStreak(v.streak);
     let lanterns = loadLanterns();
     if (v.firstVisitToday && v.lanterns > 0) {
@@ -202,7 +203,8 @@ export default function Page() {
         streak: bucketStreak(v.streak.count),
         welcome_back: v.welcomeBack,
       });
-      setVisit(v);
+      // はじめて来た人には出さない（最初の 1 回目の遊びを邪魔しない）
+      if (prevStreak.lastDate !== null) setVisit(v);
     }
     setStreak(v.streak);
     setPendingLanterns(lanterns);
@@ -654,10 +656,12 @@ export default function Page() {
           onStartDeep={handleStartDeep}
           onShowCodex={handleShowCodex}
           bestOverall={progress.best}
+          welcome={
+            visit ? (
+              <WelcomeModal visit={visit} lanterns={pendingLanterns} onClose={() => setVisit(null)} />
+            ) : null
+          }
         />
-        {visit && (
-          <WelcomeModal visit={visit} lanterns={pendingLanterns} onClose={() => setVisit(null)} />
-        )}
       </div>
     );
   }
