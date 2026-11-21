@@ -1,7 +1,7 @@
 import type { Skill } from "./types";
 import { guardShareText } from "./shareGuard";
 import { IS_DIST } from "./dist";
-import { dailyShareUrl } from "./daily";
+import { dailyShareUrl } from "./dailyLinks";
 
 export const SITE_URL = "https://mine-rogue.vercel.app/";
 export const HASHTAGS = ["#MineRogue", "#ブラウザゲーム"];

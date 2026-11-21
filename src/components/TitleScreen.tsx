@@ -7,6 +7,11 @@ import { currentTitle, DEEP_UNLOCK_FLOOR } from "@/lib/progress";
 import { IS_DIST } from "@/lib/dist";
 
 interface Props {
+  /** 逃した日のお題（後から 1 回ずつ遊べる） */
+  pastDailies?: { key: string; number: number }[];
+  onStartDailyFor?: (dateKey: string) => void;
+  /** 招待のリンクで来たお題 */
+  invite?: { key: string; number: number; record: DailyRecord | null } | null;
   bestFloor: number;
   totalPlays: number;
   onStart: () => void;
@@ -21,14 +26,12 @@ interface Props {
   onStartDeep: () => void;
   onShowCodex: () => void;
   bestOverall: number;
-  /** 逃した日のお題（後から 1 回ずつ遊べる） */
-  pastDailies?: { key: string; number: number }[];
-  onStartDailyFor?: (dateKey: string) => void;
-  /** 招待のリンクで来たお題 */
-  invite?: { key: string; number: number; record: DailyRecord | null } | null;
 }
 
 export default function TitleScreen({
+  pastDailies = [],
+  onStartDailyFor,
+  invite = null,
   bestFloor,
   totalPlays,
   onStart,
@@ -43,9 +46,6 @@ export default function TitleScreen({
   onStartDeep,
   onShowCodex,
   bestOverall,
-  pastDailies = [],
-  onStartDailyFor,
-  invite = null,
 }: Props) {
   const title = currentTitle(bestOverall);
   return (

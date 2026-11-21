@@ -53,13 +53,11 @@ import {
   dailyRandom,
   dailyNumber,
   bucketStreak,
-  pastDailyKeys,
-  dailyKeyFromSearch,
-  isPlayableDailyKey,
   MAX_LANTERNS,
   type StreakState,
   type VisitResult,
 } from "@/lib/daily";
+import { pastDailyKeys, dailyKeyFromSearch, isPlayableDailyKey } from "@/lib/dailyLinks";
 import { trackEvent } from "@/lib/gtag";
 import { EVENTS, bucketFloor, bucketMinutes } from "@/lib/events";
 import Header from "@/components/Header";
