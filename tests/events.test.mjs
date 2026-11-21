@@ -19,5 +19,6 @@ test("時間の丸め", () => {
 test("イベント名は指示どおり", () => {
   assert.deepEqual(Object.values(EVENTS).sort(), [
     "daily_done", "floor_clear", "login_reward", "run_end", "run_start", "share_card",
+    "share_done", "share_start",
   ]);
 });
