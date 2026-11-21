@@ -21,6 +21,8 @@ interface Props {
   /** 毎日の挑戦なら「デイリー #N」 */
   dailyLabel?: string;
   isDaily?: boolean;
+  /** 毎日の挑戦のお題の日付 */
+  dateKey?: string | null;
   newUnlocks?: UnlockDef[];
   newTitles?: TitleDef[];
   onRestart: () => void;
@@ -37,13 +39,14 @@ export default function GameOverScreen({
   totalPlays,
   dailyLabel,
   isDaily = false,
+  dateKey = null,
   newUnlocks = [],
   newTitles = [],
   onRestart,
   onBackToTitle,
 }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
-  const result = { floor, skills, timer, isNewRecord, label: dailyLabel };
+  const result = { floor, skills, timer, isNewRecord, label: dailyLabel, dateKey };
 
   function flash(msg: string) {
     setNotice(msg);
