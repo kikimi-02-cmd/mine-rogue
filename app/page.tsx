@@ -33,6 +33,7 @@ import {
   saveDeepBest,
   loadProgress,
   loadTutorialStep,
+  loadOrInitFirstDate,
   saveTutorialStep,
   TUTORIAL_STEPS,
 } from "@/lib/storage";
@@ -53,12 +54,13 @@ import {
   dailyRandom,
   dailyNumber,
   bucketStreak,
+  daysBetween,
   MAX_LANTERNS,
   type StreakState,
   type VisitResult,
 } from "@/lib/daily";
 import { trackEvent } from "@/lib/gtag";
-import { EVENTS, bucketFloor, bucketMinutes } from "@/lib/events";
+import { EVENTS, bucketFloor, bucketMinutes, bucketDaysSinceFirst } from "@/lib/events";
 import Header from "@/components/Header";
 import Board from "@/components/Board";
 import SkillBar from "@/components/SkillBar";
@@ -193,6 +195,16 @@ export default function Page() {
     const today = localDateKey();
     const v = registerVisit(loadStreak(), today);
     saveStreak(v.streak);
+    // 継続率: 初回の日と今日の日付の組だけを送る（個人の ID は使わない）
+    const firstDate = loadOrInitFirstDate(today);
+    if (v.firstVisitToday) {
+      trackEvent(EVENTS.visitDay, {
+        first_date: firstDate,
+        visit_date: today,
+        since_first: bucketDaysSinceFirst(daysBetween(firstDate, today)),
+        streak: bucketStreak(v.streak.count),
+      });
+    }
     let lanterns = loadLanterns();
     if (v.firstVisitToday && v.lanterns > 0) {
       lanterns = Math.min(MAX_LANTERNS, lanterns + v.lanterns);

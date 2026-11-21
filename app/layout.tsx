@@ -67,7 +67,7 @@ export default function RootLayout({
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-VCZGFL2T13');
+              gtag('config', 'G-VCZGFL2T13', { allow_google_signals: false, allow_ad_personalization_signals: false });
             `,
           }}
         />

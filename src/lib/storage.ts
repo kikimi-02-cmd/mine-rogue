@@ -165,3 +165,16 @@ export function saveTutorialStep(step: number): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(TUTORIAL_KEY, String(step));
 }
+
+// ─── 継続率（初回の日だけを残す。個人の ID は作らない） ─────────
+
+const FIRST_DATE_KEY = "mine_rogue_first_date";
+
+/** 初回に開いた日。無ければ today を初回として保存して返す */
+export function loadOrInitFirstDate(today: string): string {
+  if (typeof window === "undefined") return today;
+  const v = localStorage.getItem(FIRST_DATE_KEY);
+  if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  localStorage.setItem(FIRST_DATE_KEY, today);
+  return today;
+}
