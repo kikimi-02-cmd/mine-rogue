@@ -1,4 +1,5 @@
 "use client";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import AdUnit from "@/components/AdUnit";
 import type { StreakState } from "@/lib/daily";
@@ -21,6 +22,8 @@ interface Props {
   onStartDeep: () => void;
   onShowCodex: () => void;
   bestOverall: number;
+  /** その日はじめて開いたときの知らせ（画面を覆わない） */
+  welcome?: ReactNode;
 }
 
 export default function TitleScreen({
@@ -38,6 +41,7 @@ export default function TitleScreen({
   onStartDeep,
   onShowCodex,
   bestOverall,
+  welcome,
 }: Props) {
   const title = currentTitle(bestOverall);
   return (
@@ -95,6 +99,7 @@ export default function TitleScreen({
 
       {/* Actions */}
       <div className="flex w-full max-w-xs flex-col gap-3">
+        {welcome}
         <button
           data-start
           onClick={onStart}

@@ -181,3 +181,22 @@ export function bucketStreak(n: number): string {
   if (n <= 30) return "15-30";
   return "31+";
 }
+
+/** ログイン報酬の段（先に全部見せる用）。lanternsForStreak と同じ決まりから作る */
+export interface LanternStep {
+  fromDay: number;
+  toDay: number | null;
+  lanterns: number;
+}
+export function lanternLadder(): LanternStep[] {
+  const steps: LanternStep[] = [];
+  for (let day = 1; steps.length < MAX_LANTERNS; day++) {
+    const n = lanternsForStreak(day);
+    const last = steps[steps.length - 1];
+    if (!last || last.lanterns !== n) {
+      if (last) last.toDay = day - 1;
+      steps.push({ fromDay: day, toDay: null, lanterns: n });
+    }
+  }
+  return steps;
+}
