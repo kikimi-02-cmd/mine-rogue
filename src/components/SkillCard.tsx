@@ -47,6 +47,7 @@ export default function SkillCard({ skill, onClick }: Props) {
 
   return (
     <button
+      data-skill-choice
       onClick={onClick}
       className={`relative w-full text-left overflow-hidden rounded-2xl border-2 p-3.5 transition-transform active:scale-[0.97] hover:scale-[1.02] ${
         isEpic ? "animate-glow-pulse" : ""

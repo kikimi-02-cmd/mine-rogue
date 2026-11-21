@@ -5,6 +5,7 @@ import type { Skill } from "@/lib/types";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
 import { trackEvent } from "@/lib/gtag";
+import { formatTime, shareResult, saveResultCard } from "@/lib/share";
 
 interface Props {
   floor: number;
@@ -18,14 +19,6 @@ interface Props {
   onBackToTitle: () => void;
 }
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-    .toString()
-    .padStart(2, "0");
-  const s = (seconds % 60).toString().padStart(2, "0");
-  return `${m}:${s}`;
-}
-
 export default function GameOverScreen({
   floor,
   skills,
@@ -37,33 +30,28 @@ export default function GameOverScreen({
   onRestart,
   onBackToTitle,
 }: Props) {
-  const [copied, setCopied] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const result = { floor, skills, timer, isNewRecord };
 
-  const skillIcons =
-    skills.length > 0 ? skills.map((s) => s.icon).join("") : "なし";
-  const shareText = [
-    "Mine Rogue ⛏💀",
-    `到達: B${floor}F`,
-    `スキル: ${skillIcons}`,
-    `⏱ ${formatTime(timer)}`,
-    "#MineRogue #ブラウザゲーム",
-    "https://mine-rogue.vercel.app/",
-  ].join("\n");
-
-  function handleShare() {
-    navigator.clipboard
-      .writeText(shareText)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {});
+  function flash(msg: string) {
+    setNotice(msg);
+    setTimeout(() => setNotice(null), 2500);
   }
 
-  function handleXShare() {
-    trackEvent("share", { method: "twitter", floor });
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  async function handleShare() {
+    const outcome = await shareResult(result);
+    if (outcome === "shared" || outcome === "fallback") {
+      trackEvent("share_card", { method: outcome, floor });
+    }
+    if (outcome === "fallback") flash("画像を保存し、文をコピーしました");
+    if (outcome === "blocked") flash("共有できませんでした");
+  }
+
+  async function handleSave() {
+    if (await saveResultCard(result)) {
+      trackEvent("share_card", { method: "save", floor });
+      flash("画像を保存しました");
+    }
   }
 
   return (
@@ -150,20 +138,25 @@ export default function GameOverScreen({
           </p>
         </div>
 
-        {/* Share buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={handleShare}
-            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-          >
-            {copied ? "コピーしました！" : "📋 結果をシェア"}
-          </button>
-          <button
-            onClick={handleXShare}
-            className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-2.5 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-          >
-            𝕏 でシェア
-          </button>
+        {/* Share */}
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleShare}
+              className="flex-[2] rounded-xl border border-emerald-500/50 bg-[#16243A] py-3 text-sm font-black text-emerald-300 transition-colors hover:bg-[#1E3350]"
+            >
+              📤 結果をシェア
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
+            >
+              🖼 画像を保存
+            </button>
+          </div>
+          <p className="h-4 text-center text-xs text-emerald-400" aria-live="polite">
+            {notice ?? ""}
+          </p>
         </div>
 
         <button

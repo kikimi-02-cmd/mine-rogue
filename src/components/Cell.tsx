@@ -144,6 +144,7 @@ export default function Cell({
         boxShadow:
           "inset 1.5px 1.5px 0 rgba(255,255,255,0.18), inset -1.5px -1.5px 0 rgba(0,0,0,0.32)",
       }}
+      data-cell="hidden"
       className="flex items-center justify-center rounded-[3px] cursor-pointer select-none border border-[#18293F] hover:brightness-125 active:brightness-75 active:scale-95 transition-[filter,transform] duration-75"
       onClick={handleClick}
       onContextMenu={handleContextMenu}

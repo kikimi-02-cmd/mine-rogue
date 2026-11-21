@@ -49,6 +49,7 @@ export default function TitleScreen({
       {/* Actions */}
       <div className="flex w-full max-w-xs flex-col gap-3">
         <button
+          data-start
           onClick={onStart}
           className="animate-cta-pulse w-full rounded-2xl bg-[#10B981] py-5 text-2xl font-black tracking-wide text-white transition-colors hover:bg-emerald-400 active:bg-emerald-600"
         >

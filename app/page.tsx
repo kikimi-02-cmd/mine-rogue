@@ -69,6 +69,8 @@ export default function Page() {
   const gameOverTrackedRef = useRef(false);
 
   useEffect(() => {
+    // localStorage（外の保存先）から読み込んで画面に反映する。初回の描画は SSR と揃えるため effect で行う
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     setState(createInitialState(loadBestFloor(), "title"));
     setTotalPlays(loadPlayCount());
@@ -96,9 +98,11 @@ export default function Page() {
         skill_count: state.skills.length,
         timer: state.timer,
       });
+      // 保存した回数（localStorage）を読み戻す
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTotalPlays(loadPlayCount());
     }
-  }, [mounted, state.gamePhase, state.board, state.skills]);
+  }, [mounted, state.gamePhase, state.board, state.skills, state.floor, state.timer]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -239,7 +243,7 @@ export default function Page() {
     const count = hasMagnet ? 4 : 3;
     setSkillChoices(getRandomSkillChoices(count, hasLucky));
     setState((prev) => ({ ...prev, gamePhase: "skillSelect" }));
-  }, [state.skills]);
+  }, [state.floor, state.skills]);
 
   const handleSkillSelect = useCallback((skill: Skill) => {
     setState((prev) => {
