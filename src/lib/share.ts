@@ -1,6 +1,7 @@
 import type { Skill } from "./types";
 import { guardShareText } from "./shareGuard";
 import { IS_DIST } from "./dist";
+import { dailyShareUrl } from "./daily";
 
 export const SITE_URL = "https://mine-rogue.vercel.app/";
 export const HASHTAGS = ["#MineRogue", "#ブラウザゲーム"];
@@ -20,6 +21,13 @@ export interface ShareResult {
   isNewRecord?: boolean;
   /** 毎日の挑戦などの見出し（任意） */
   label?: string;
+  /** 毎日の挑戦なら、そのお題の日付（リンクを受け取った人が同じ盤から遊べる） */
+  dateKey?: string | null;
+}
+
+/** 共有のリンク。毎日の挑戦なら同じお題を開く ?d= をつける */
+export function shareUrl(r: Pick<ShareResult, "dateKey">): string {
+  return dailyShareUrl(SITE_URL, r.dateKey);
 }
 
 export function buildShareText(r: ShareResult): string {
@@ -31,7 +39,7 @@ export function buildShareText(r: ShareResult): string {
     `⏱ ${formatTime(r.timer)}`,
     HASHTAGS.join(" "),
     // 配信版では外部へのリンクを入れない
-    ...(IS_DIST ? [] : [SITE_URL]),
+    ...(IS_DIST ? [] : [shareUrl(r)]),
   ].join("\n");
 }
 

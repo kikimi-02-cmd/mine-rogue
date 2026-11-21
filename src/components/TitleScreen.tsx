@@ -21,6 +21,11 @@ interface Props {
   onStartDeep: () => void;
   onShowCodex: () => void;
   bestOverall: number;
+  /** 逃した日のお題（後から 1 回ずつ遊べる） */
+  pastDailies?: { key: string; number: number }[];
+  onStartDailyFor?: (dateKey: string) => void;
+  /** 招待のリンクで来たお題 */
+  invite?: { key: string; number: number; record: DailyRecord | null } | null;
 }
 
 export default function TitleScreen({
@@ -38,6 +43,9 @@ export default function TitleScreen({
   onStartDeep,
   onShowCodex,
   bestOverall,
+  pastDailies = [],
+  onStartDailyFor,
+  invite = null,
 }: Props) {
   const title = currentTitle(bestOverall);
   return (
@@ -95,6 +103,24 @@ export default function TitleScreen({
 
       {/* Actions */}
       <div className="flex w-full max-w-xs flex-col gap-3">
+        {invite && (
+          invite.record ? (
+            <div className="w-full rounded-xl border border-fuchsia-400/40 bg-[#1E1030] py-2.5 text-center text-sm font-bold text-fuchsia-200">
+              🤝 届いたお題 デイリー #{invite.number} ・ 記録 B{invite.record.floor}F
+            </div>
+          ) : (
+            <button
+              data-invite-start
+              onClick={() => onStartDailyFor?.(invite.key)}
+              className="w-full rounded-xl border border-fuchsia-400/60 bg-[#1E1030] py-3 text-base font-black text-fuchsia-200 transition-colors hover:bg-[#2A1640]"
+            >
+              🤝 届いたお題 デイリー #{invite.number}
+              <span className="ml-1.5 text-[11px] font-bold text-fuchsia-300/80">
+                送った人と同じ盤
+              </span>
+            </button>
+          )
+        )}
         <button
           data-start
           onClick={onStart}
@@ -118,6 +144,20 @@ export default function TitleScreen({
               全員同じ盤・1日1回
             </span>
           </button>
+        )}
+        {pastDailies.length > 0 && (
+          <div data-past-dailies className="flex flex-wrap items-center justify-center gap-1.5">
+            <span className="text-[11px] font-bold text-gray-500">逃したお題:</span>
+            {pastDailies.map((d) => (
+              <button
+                key={d.key}
+                onClick={() => onStartDailyFor?.(d.key)}
+                className="rounded-lg border border-sky-500/30 bg-[#0F1B2E] px-2.5 py-1 text-[11px] font-black text-sky-300 hover:bg-[#15304F]"
+              >
+                #{d.number}
+              </button>
+            ))}
+          </div>
         )}
         {deepUnlocked ? (
           <button

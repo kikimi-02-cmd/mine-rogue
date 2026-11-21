@@ -53,6 +53,9 @@ import {
   dailyRandom,
   dailyNumber,
   bucketStreak,
+  pastDailyKeys,
+  dailyKeyFromSearch,
+  isPlayableDailyKey,
   MAX_LANTERNS,
   type StreakState,
   type VisitResult,
@@ -171,6 +174,10 @@ export default function Page() {
   const [pendingLanterns, setPendingLanterns] = useState(0);
   const [todayKey, setTodayKey] = useState("");
   const [todayDaily, setTodayDaily] = useState<DailyRecord | null>(null);
+  /** 逃した日のお題（まだ遊んでいないもの） */
+  const [pastDailies, setPastDailies] = useState<string[]>([]);
+  /** 招待のリンク（?d=）で来たお題 */
+  const [inviteKey, setInviteKey] = useState<string | null>(null);
   const [deepBest, setDeepBest] = useState(0);
   const [progress, setProgress] = useState<Progress>({ best: 1, plays: 0 });
   const runStartProgressRef = useRef<Progress>({ best: 1, plays: 0 });
@@ -208,6 +215,8 @@ export default function Page() {
     setPendingLanterns(lanterns);
     setTodayKey(today);
     setTodayDaily(loadDailyRecord(today));
+    setPastDailies(pastDailyKeys(today).filter((k) => !loadDailyRecord(k)));
+    setInviteKey(dailyKeyFromSearch(window.location.search, today));
     setDeepBest(loadDeepBest());
     setProgress(loadProgress());
     setTutorialStep(loadTutorialStep());
@@ -237,8 +246,10 @@ export default function Page() {
         });
         if (saved) {
           trackEvent(EVENTS.dailyDone, { floor_bucket: bucketFloor(state.floor) });
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setTodayDaily(loadDailyRecord(state.dateKey));
+          if (state.dateKey === localDateKey()) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setTodayDaily(loadDailyRecord(state.dateKey));
+          }
         }
       }
       trackEvent(EVENTS.runEnd, {
@@ -570,20 +581,23 @@ export default function Page() {
   const handleStart = useCallback(() => startRun("title", "normal"), [startRun]);
   const handleStartDeep = useCallback(() => startRun("title", "deep"), [startRun]);
 
-  const handleStartDaily = useCallback(() => {
+  /** 毎日の挑戦を始める。dateKey を渡すと、逃した日・招待のお題（1 日 1 回は同じ） */
+  const handleStartDaily = useCallback((key?: string) => {
     const today = localDateKey();
-    if (loadDailyRecord(today)) return;
+    const dateKey = key && isPlayableDailyKey(key, today) ? key : today;
+    if (loadDailyRecord(dateKey)) return;
     resetTransientState();
-    trackEvent(EVENTS.runStart, { source: "daily", mode: "daily" });
-    trackEvent("game_start", { source: "daily" });
+    const source = dateKey === today ? "daily" : key === inviteKey ? "daily_invite" : "daily_past";
+    trackEvent(EVENTS.runStart, { source, mode: "daily" });
+    trackEvent("game_start", { source });
     setTodayKey(today);
     setState(
       createInitialState(loadBestFloor(), "playing", {
         mode: "daily",
-        dateKey: today,
+        dateKey,
       }),
     );
-  }, [resetTransientState]);
+  }, [resetTransientState, inviteKey]);
 
   const handleRestart = useCallback(
     () => startRun("restart", state.mode === "deep" ? "deep" : "normal"),
@@ -619,7 +633,9 @@ export default function Page() {
     setState(createInitialState(loadBestFloor(), "title"));
     setTotalPlays(loadPlayCount());
     setPendingLanterns(loadLanterns());
-    setTodayDaily(loadDailyRecord(localDateKey()));
+    const today = localDateKey();
+    setTodayDaily(loadDailyRecord(today));
+    setPastDailies(pastDailyKeys(today).filter((k) => !loadDailyRecord(k)));
   }, [resetTransientState]);
 
   const handleShowStats = useCallback(() => {
@@ -648,7 +664,20 @@ export default function Page() {
           lanterns={pendingLanterns}
           dailyNumber={todayKey ? dailyNumber(todayKey) : 1}
           todayDaily={todayDaily}
-          onStartDaily={handleStartDaily}
+          onStartDaily={() => handleStartDaily()}
+          pastDailies={pastDailies
+            .filter((k) => k !== inviteKey)
+            .map((k) => ({ key: k, number: dailyNumber(k) }))}
+          onStartDailyFor={handleStartDaily}
+          invite={
+            inviteKey && inviteKey !== todayKey
+              ? {
+                  key: inviteKey,
+                  number: dailyNumber(inviteKey),
+                  record: loadDailyRecord(inviteKey),
+                }
+              : null
+          }
           deepUnlocked={state.bestFloor >= DEEP_UNLOCK_FLOOR || deepBest > 0}
           deepBest={deepBest}
           onStartDeep={handleStartDeep}
@@ -729,6 +758,7 @@ export default function Page() {
                 : undefined
           }
           isDaily={state.mode === "daily"}
+          dateKey={state.mode === "daily" ? state.dateKey : null}
           newUnlocks={runRewards.unlocks}
           newTitles={runRewards.titles}
           onRestart={handleRestart}
