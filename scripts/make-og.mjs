@@ -1,5 +1,5 @@
-// 次回用: リンクの絵（OG 画像 1200×630）を作り直す。
-// 使い方: NODE_PATH=$(npm root -g) node scripts/make-og.mjs  → app/opengraph-image.png
+// 次回用: リンクの絵（OG 画像 1200×630）を作り直す。日本語と英語の 2 枚。
+// 使い方: npm run og  → public/og-ja.png と public/og-en.png（ページの metadata が指す）
 // 遊び方が一目で分かるように: 数字のマス・旗・地雷・スキルを 1 枚に
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -25,7 +25,22 @@ const cell = (c) => {
 };
 const board = B.map((r) => r.split(" ").map(cell).join("")).join("");
 
-const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+const TEXT = {
+  ja: {
+    out: ["public", "og-ja.png"],
+    tagline: "地雷の盤を潜るローグライク",
+    items: ["数字 = 周りの地雷の数", "クリアごとにスキルを1つ", "毎日の挑戦・深層モード"],
+    cta: "ブラウザで無料・すぐ遊べる",
+  },
+  en: {
+    out: ["public", "og-en.png"],
+    tagline: "A roguelike dive through minefields",
+    items: ["Numbers = mines around", "Pick a skill every floor", "Daily challenge · Deep Mode"],
+    cta: "Free in your browser · Play now",
+  },
+};
+
+const page = (t) => `<!doctype html><html><head><meta charset="utf-8"><style>
 *{box-sizing:border-box;margin:0}
 body{width:1200px;height:630px;font-family:"Hiragino Sans","Noto Sans CJK JP","Noto Sans JP",sans-serif;
  background:radial-gradient(ellipse at 30% 0%,#14365C,#0A1628 70%);color:#E2E8F0;display:flex;align-items:center;padding:0 70px;gap:60px}
@@ -47,13 +62,13 @@ li span{display:inline-flex;width:46px;height:46px;border-radius:12px;background
 </style></head><body>
 <div class="l">
  <h1>MINE <b>ROGUE</b></h1>
- <p class="t">地雷の盤を潜るローグライク</p>
+ <p class="t">${t.tagline}</p>
  <ul>
-  <li><span style="color:#60A5FA">1</span>数字 = 周りの地雷の数</li>
-  <li><span>✨</span>クリアごとにスキルを1つ</li>
-  <li><span>📅</span>毎日の挑戦・深層モード</li>
+  <li><span style="color:#60A5FA">1</span>${t.items[0]}</li>
+  <li><span>✨</span>${t.items[1]}</li>
+  <li><span>📅</span>${t.items[2]}</li>
  </ul>
- <p class="f">ブラウザで無料・すぐ遊べる</p>
+ <p class="f">${t.cta}</p>
 </div>
 <div class="r"><div class="g">${board}</div>
  <div class="sk"><div>🛡</div><div style="border-color:#3B82F6">👁</div><div style="border-color:#10B981">🍀</div></div>
@@ -63,10 +78,12 @@ li span{display:inline-flex;width:46px;height:46px;border-radius:12px;background
 (async () => {
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1200, height: 630 } });
-  await p.setContent(html);
-  await p.waitForTimeout(300);
-  const out = path.join(__dirname, "..", "app", "opengraph-image.png");
-  await p.screenshot({ path: out });
+  for (const t of Object.values(TEXT)) {
+    await p.setContent(page(t));
+    await p.waitForTimeout(300);
+    const out = path.join(__dirname, "..", ...t.out);
+    await p.screenshot({ path: out });
+    console.log("saved", out);
+  }
   await b.close();
-  console.log("saved", out);
 })();

@@ -1,4 +1,5 @@
 "use client";
+import { useI18n } from "@/i18n";
 
 interface Props {
   step: number;
@@ -21,6 +22,7 @@ export default function CoachTip({
   onSkip,
   position = "bottom",
 }: Props) {
+  const { t } = useI18n();
   const card = (
     <div
       data-coach
@@ -29,10 +31,10 @@ export default function CoachTip({
     >
       <div className="flex items-center justify-between">
         <p className="text-[10px] font-black tracking-widest text-emerald-400">
-          はじめての方へ {step}/{total}
+          {t.coach.firstTime(step, total)}
         </p>
         <button onClick={onSkip} className="text-[10px] text-gray-400 underline">
-          説明を閉じる
+          {t.coach.close}
         </button>
       </div>
       <p className="mt-1 text-sm font-black text-white">{title}</p>
@@ -42,7 +44,7 @@ export default function CoachTip({
         onClick={onNext}
         className="mt-2 w-full rounded-lg bg-emerald-500/90 py-1.5 text-xs font-black text-white"
       >
-        わかった
+        {t.coach.gotIt}
       </button>
     </div>
   );

@@ -2,6 +2,9 @@ import type { Skill } from "./types";
 import { guardShareText } from "./shareGuard";
 import { IS_DIST } from "./dist";
 import { dailyShareUrl } from "./dailyLinks";
+import { ja } from "../i18n/ja";
+import { en } from "../i18n/en";
+import type { Lang } from "../i18n/lang";
 
 export const SITE_URL = "https://mine-rogue.vercel.app/";
 /** ハッシュタグはゲーム名の 1 つに固定（ほかのタグは足さない） */
@@ -24,6 +27,12 @@ export interface ShareResult {
   label?: string;
   /** 毎日の挑戦なら、そのお題の日付（リンクを受け取った人が同じ盤から遊べる） */
   dateKey?: string | null;
+  /** 文とカードの言葉（既定は日本語） */
+  lang?: Lang;
+}
+
+function dictFor(r: Pick<ShareResult, "lang">) {
+  return r.lang === "en" ? en : ja;
 }
 
 /** 共有のリンク。毎日の挑戦なら同じお題を開く ?d= をつける */
@@ -32,11 +41,12 @@ export function shareUrl(r: Pick<ShareResult, "dateKey">): string {
 }
 
 export function buildShareText(r: ShareResult): string {
-  const icons = r.skills.length > 0 ? r.skills.map((s) => s.icon).join("") : "なし";
+  const t = dictFor(r);
+  const icons = r.skills.length > 0 ? r.skills.map((s) => s.icon).join("") : t.share.none;
   return [
     `Mine Rogue ⛏${r.label ? ` ${r.label}` : ""}`,
-    `到達: B${r.floor}F${r.isNewRecord ? " 🎉自己ベスト" : ""}`,
-    `スキル: ${icons}`,
+    `${t.share.reached(r.floor)}${r.isNewRecord ? t.share.newBest : ""}`,
+    t.share.skills(icons),
     `⏱ ${formatTime(r.timer)}`,
     HASHTAG,
     // 配信版では外部へのリンクを入れない
@@ -74,6 +84,7 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
   canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  const t = dictFor(r);
 
   // 背景
   const bg = ctx.createLinearGradient(0, 0, 0, H);
@@ -116,20 +127,20 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
   ctx.stroke();
   ctx.font = `700 38px ${FONT}`;
   ctx.fillStyle = "#94A3B8";
-  ctx.fillText("到達フロア", W / 2, 300);
+  ctx.fillText(t.share.cardReached, W / 2, 300);
   ctx.font = `900 190px ${FONT}`;
   ctx.fillStyle = "#FACC15";
   ctx.fillText(`B${r.floor}F`, W / 2, 425);
   if (r.isNewRecord) {
     ctx.font = `900 36px ${FONT}`;
     ctx.fillStyle = "#FDE047";
-    ctx.fillText("🎉 自己ベスト更新", W / 2, 535);
+    ctx.fillText(t.share.cardNewBest, W / 2, 535);
   }
 
   // 時間
   ctx.font = `700 34px ${FONT}`;
   ctx.fillStyle = "#94A3B8";
-  ctx.fillText("経過時間", W / 2, 625);
+  ctx.fillText(t.share.cardTime, W / 2, 625);
   ctx.font = `900 64px ui-monospace,Menlo,monospace`;
   ctx.fillStyle = "#E2E8F0";
   ctx.fillText(formatTime(r.timer), W / 2, 690);
@@ -137,12 +148,12 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
   // スキル
   ctx.font = `700 34px ${FONT}`;
   ctx.fillStyle = "#94A3B8";
-  ctx.fillText("取ったスキル", W / 2, 775);
+  ctx.fillText(t.share.cardSkills, W / 2, 775);
   const icons = r.skills.map((s) => s.icon);
   if (icons.length === 0) {
     ctx.font = `700 44px ${FONT}`;
     ctx.fillStyle = "#64748B";
-    ctx.fillText("なし", W / 2, 845);
+    ctx.fillText(t.share.none, W / 2, 845);
   } else {
     const shown = icons.slice(0, 12);
     const size = shown.length > 8 ? 60 : 76;
@@ -153,7 +164,7 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
     if (icons.length > shown.length) {
       ctx.font = `700 32px ${FONT}`;
       ctx.fillStyle = "#94A3B8";
-      ctx.fillText(`ほか ${icons.length - shown.length}`, W / 2, 910);
+      ctx.fillText(t.share.cardMore(icons.length - shown.length), W / 2, 910);
     }
   }
 

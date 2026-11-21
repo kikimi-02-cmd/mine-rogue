@@ -1,7 +1,7 @@
 {
   "name": "Mine Rogue",
   "short_name": "MineRogue",
-  "description": "マインスイーパー×ローグライク",
+  "description": "Minesweeper meets roguelike — dive floor by floor, pick a skill each clear.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",

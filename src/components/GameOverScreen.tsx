@@ -9,6 +9,7 @@ import { EVENTS, bucketFloor } from "@/lib/events";
 import { formatTime, shareResult, saveResultCard } from "@/lib/share";
 import skillsData from "@/data/skills.json";
 import type { TitleDef, UnlockDef } from "@/lib/progress";
+import { useI18n, skillText } from "@/i18n";
 
 interface Props {
   floor: number;
@@ -46,7 +47,16 @@ export default function GameOverScreen({
   onBackToTitle,
 }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
-  const result = { floor, skills, timer, isNewRecord, label: dailyLabel, dateKey };
+  const { t, lang } = useI18n();
+  const result = {
+    floor,
+    skills,
+    timer,
+    isNewRecord,
+    label: dailyLabel,
+    dateKey,
+    lang,
+  };
 
   function flash(msg: string) {
     setNotice(msg);
@@ -64,8 +74,8 @@ export default function GameOverScreen({
     if (outcome === "shared" || outcome === "fallback") {
       trackEvent(EVENTS.shareCard, { method: outcome, floor_bucket: bucketFloor(floor) });
     }
-    if (outcome === "fallback") flash("画像を保存し、文をコピーしました");
-    if (outcome === "blocked") flash("共有できませんでした");
+    if (outcome === "fallback") flash(t.gameOver.sharedFallback);
+    if (outcome === "blocked") flash(t.gameOver.shareBlocked);
   }
 
   async function handleSave() {
@@ -73,7 +83,7 @@ export default function GameOverScreen({
     if (await saveResultCard(result)) {
       trackEvent(EVENTS.shareDone, { place: "save", outcome: "save", floor_bucket: bucketFloor(floor) });
       trackEvent(EVENTS.shareCard, { method: "save", floor_bucket: bucketFloor(floor) });
-      flash("画像を保存しました");
+      flash(t.gameOver.saved);
     }
   }
 
@@ -84,13 +94,13 @@ export default function GameOverScreen({
               onClick={handleShare}
               className="flex-[2] rounded-xl border border-emerald-500/50 bg-[#16243A] py-3 text-sm font-black text-emerald-300 transition-colors hover:bg-[#1E3350]"
             >
-              📤 結果をシェア
+              {t.gameOver.share}
             </button>
             <button
               onClick={handleSave}
               className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
             >
-              🖼 画像を保存
+              {t.gameOver.save}
             </button>
           </div>
           <p className="h-4 text-center text-xs text-emerald-400" aria-live="polite">
@@ -115,7 +125,7 @@ export default function GameOverScreen({
         </h2>
         {isDaily && dailyLabel && (
           <p className="mt-2 text-sm font-black text-sky-300">
-            📅 {dailyLabel} の記録を残しました
+            {t.gameOver.dailyLogged(dailyLabel)}
           </p>
         )}
         {isNewRecord && (
@@ -130,11 +140,11 @@ export default function GameOverScreen({
         <div className="overflow-hidden rounded-2xl border border-[#1E3A5F] bg-[#0F1B2E]">
           <div className="grid grid-cols-2 divide-x divide-[#1E3A5F]">
             <div className="p-4 text-center">
-              <p className="mb-1.5 text-xs text-gray-500">到達フロア</p>
+              <p className="mb-1.5 text-xs text-gray-500">{t.gameOver.reached}</p>
               <p className="text-2xl font-black text-emerald-400">B{floor}F</p>
             </div>
             <div className="p-4 text-center">
-              <p className="mb-1.5 text-xs text-gray-500">経過時間</p>
+              <p className="mb-1.5 text-xs text-gray-500">{t.gameOver.time}</p>
               <p className="font-mono text-2xl font-black text-[#E2E8F0]">
                 {formatTime(timer)}
               </p>
@@ -142,13 +152,13 @@ export default function GameOverScreen({
           </div>
           <div className="grid grid-cols-2 divide-x divide-[#1E3A5F] border-t border-[#1E3A5F]">
             <div className="p-4 text-center">
-              <p className="mb-1.5 text-xs text-gray-500">開封セル数</p>
+              <p className="mb-1.5 text-xs text-gray-500">{t.gameOver.opened}</p>
               <p className="text-2xl font-black text-[#E2E8F0]">
                 {revealedCount}
               </p>
             </div>
             <div className="p-4 text-center">
-              <p className="mb-1.5 text-xs text-gray-500">ベスト記録</p>
+              <p className="mb-1.5 text-xs text-gray-500">{t.gameOver.best}</p>
               <p className="text-2xl font-black text-yellow-400">B{bestFloor}F</p>
             </div>
           </div>
@@ -157,9 +167,9 @@ export default function GameOverScreen({
         {/* ラン同士で残るもの: 新しい称号・解放 */}
         {(newTitles.length > 0 || newUnlocks.length > 0) && (
           <div className="animate-pop-in rounded-2xl border border-yellow-500/40 bg-[#2A2410] p-3 text-center">
-            {newTitles.map((t) => (
-              <p key={t.floor} className="text-sm font-black text-yellow-200">
-                {t.icon} 称号「{t.name}」を手に入れた！
+            {newTitles.map((tt) => (
+              <p key={tt.floor} className="text-sm font-black text-yellow-200">
+                {t.gameOver.newTitle(tt.icon, t.titles[tt.floor] ?? tt.name)}
               </p>
             ))}
             {newUnlocks.map((u) => {
@@ -168,7 +178,7 @@ export default function GameOverScreen({
               );
               return (
                 <p key={u.skillId} className="text-sm font-black text-emerald-300">
-                  🔓 新スキル「{meta?.icon} {meta?.name}」が選択肢に入ります
+                  {t.gameOver.newUnlock(meta?.icon ?? "", meta ? skillText(t, meta).name : "")}
                 </p>
               );
             })}
@@ -181,7 +191,7 @@ export default function GameOverScreen({
         {/* Acquired skills */}
         {skills.length > 0 && (
           <div>
-            <p className="mb-2 text-xs text-gray-500">取得スキル</p>
+            <p className="mb-2 text-xs text-gray-500">{t.gameOver.skillsTaken}</p>
             <div className="flex flex-wrap gap-2">
               {skills.map((skill, i) => (
                 <div
@@ -190,7 +200,7 @@ export default function GameOverScreen({
                 >
                   <span className="text-base leading-none">{skill.icon}</span>
                   <span className="text-xs font-bold text-[#E2E8F0]">
-                    {skill.name}
+                    {skillText(t, skill).name}
                   </span>
                 </div>
               ))}
@@ -201,33 +211,35 @@ export default function GameOverScreen({
         {/* Main CTA */}
         <div className="flex flex-col items-center gap-2">
           <button
+            data-again
             onClick={onRestart}
             className="w-full rounded-2xl bg-[#10B981] py-5 text-2xl font-black text-white shadow-xl shadow-emerald-500/30 transition-colors hover:bg-emerald-400 active:bg-emerald-600"
             style={{ letterSpacing: "0.05em" }}
           >
-            もう一度
+            {t.gameOver.again}
           </button>
           <p className="text-xs text-gray-500">
-            次こそB{bestFloor + 1}Fを目指そう！
+            {t.gameOver.aimNext(bestFloor + 1)}
           </p>
         </div>
 
         {!happy && shareBlock}
 
         <button
+          data-back-title
           onClick={onBackToTitle}
           className="self-center text-xs text-gray-500 transition-colors hover:text-gray-300"
         >
-          🏠 タイトルへ戻る
+          {t.common.backToTitleHome}
         </button>
 
         <p data-ok-to-stop className="text-center text-[11px] text-gray-500">
-          ☕ ここでやめても大丈夫。ベスト記録・図鑑・称号はこの端末に残ります
+          {t.gameOver.okToStop}
         </p>
 
         {totalPlays > 0 && (
           <p className="text-center text-xs text-gray-600">
-            通算 {totalPlays}回プレイ
+            {t.common.totalPlays(totalPlays)}
           </p>
         )}
         <AdBanner />

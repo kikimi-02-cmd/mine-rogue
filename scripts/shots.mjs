@@ -1,4 +1,5 @@
 // 画面の写しを撮る。使い方: npm run build && npx next start -p 3100 & ; node scripts/shots.mjs <出力フォルダ> [scene...]
+// 英語: LOCALE=en-US（ブラウザの言葉）または BASE_URL=http://localhost:3100/en
 // scene: title / play / gameover / stats / daily / deep / codex（無いものは飛ばす）
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
@@ -18,7 +19,7 @@ fs.mkdirSync(OUT, { recursive: true });
 async function toGameOver(page) {
   // 盤のマスを順に開け続けて地雷を踏む（盤の中の button を対象）
   for (let i = 0; i < 400; i++) {
-    if (await page.getByText("GAME OVER").count()) return true;
+    if (await page.locator("[data-again]").count()) return true;
     const cells = page.locator("[data-cell='hidden']");
     const n = await cells.count();
     if (n === 0) {
@@ -39,6 +40,8 @@ for (const size of SIZES) {
   const ctx = await browser.newContext({
     viewport: { width: size.width, height: size.height },
     deviceScaleFactor: 2,
+    // LOCALE=en-US で英語のブラウザとして開く（既定は日本語）
+    locale: process.env.LOCALE ?? "ja-JP",
   });
   // SEED='{"mine_rogue_best_floor":"6"}' で保存の中身を最初に入れておける（既にあれば上書きしない）
   if (process.env.SEED) {
@@ -62,15 +65,15 @@ for (const size of SIZES) {
     await page.waitForTimeout(300);
     if (want("title")) await shot("title-after");
   }
-  if (want("stats") && (await page.getByText("📊 統計").count())) {
-    await page.getByText("📊 統計").click();
+  if (want("stats") && (await page.locator("[data-stats]").count())) {
+    await page.locator("[data-stats]").click();
     await page.waitForTimeout(400);
     await shot("stats");
     await page.goto(BASE);
     await page.waitForTimeout(500);
   }
-  if (want("codex") && (await page.getByText("📘 図鑑").count())) {
-    await page.getByText("📘 図鑑").click();
+  if (want("codex") && (await page.locator("[data-codex]").count())) {
+    await page.locator("[data-codex]").click();
     await page.waitForTimeout(400);
     await shot("codex");
     await page.goto(BASE);

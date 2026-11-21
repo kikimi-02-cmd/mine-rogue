@@ -16,6 +16,8 @@ export const EVENTS = {
   loginReward: "login_reward",
   /** その日はじめて開いた（first_date と today の組で継続率を数える。個人の ID は使わない） */
   visitDay: "visit_day",
+  /** 画面の言葉を手で切り替えた（lang: ja / en だけ） */
+  langSwitch: "lang_switch",
 } as const;
 
 /** 到達フロアを丸める（1-2 / 3-4 / 5-7 / 8-10 / 11-15 / 16-20 / 21+） */

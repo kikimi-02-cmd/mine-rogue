@@ -9,12 +9,14 @@ import {
 } from "@/lib/storage";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
+import { useI18n, skillText } from "@/i18n";
 
 interface Props {
   onBack: () => void;
 }
 
 export default function StatsScreen({ onBack }: Props) {
+  const { t } = useI18n();
   const { bestFloor, plays, revealed, topSkills } = useMemo(() => {
     const counts = loadSkillCounts();
     const meta = skillsData as { id: string; name: string; icon: string }[];
@@ -39,18 +41,18 @@ export default function StatsScreen({ onBack }: Props) {
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#334155] bg-[#16243A] text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-          aria-label="戻る"
+          aria-label={t.common.back}
         >
           ←
         </button>
-        <h2 className="text-xl font-black tracking-wide text-white">📊 統計</h2>
+        <h2 className="text-xl font-black tracking-wide text-white">{t.stats.heading}</h2>
       </div>
 
       {/* Best floor highlight */}
       <div className="mb-3 flex items-center justify-between rounded-2xl border border-yellow-500/30 bg-[#0F1B2E] px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="text-3xl">🏆</span>
-          <span className="text-sm font-bold text-gray-400">ベスト到達</span>
+          <span className="text-sm font-bold text-gray-400">{t.stats.bestReached}</span>
         </div>
         <span className="text-3xl font-black text-yellow-400">B{bestFloor}F</span>
       </div>
@@ -60,21 +62,21 @@ export default function StatsScreen({ onBack }: Props) {
         <div className="rounded-2xl border border-[#1E3A5F] bg-[#0F1B2E] p-4 text-center">
           <p className="mb-1 text-2xl">🎮</p>
           <p className="text-2xl font-black text-emerald-400">{plays}</p>
-          <p className="mt-0.5 text-xs text-gray-500">通算プレイ回数</p>
+          <p className="mt-0.5 text-xs text-gray-500">{t.stats.totalPlays}</p>
         </div>
         <div className="rounded-2xl border border-[#1E3A5F] bg-[#0F1B2E] p-4 text-center">
           <p className="mb-1 text-2xl">⛏️</p>
           <p className="text-2xl font-black text-[#E2E8F0]">{revealed}</p>
-          <p className="mt-0.5 text-xs text-gray-500">通算開封セル数</p>
+          <p className="mt-0.5 text-xs text-gray-500">{t.stats.totalOpened}</p>
         </div>
       </div>
 
       {/* Top skills */}
       <div className="rounded-2xl border border-[#1E3A5F] bg-[#0F1B2E] p-4">
-        <p className="mb-3 text-sm font-bold text-gray-400">よく取ったスキル</p>
+        <p className="mb-3 text-sm font-bold text-gray-400">{t.stats.topSkills}</p>
         {topSkills.length === 0 ? (
           <p className="py-4 text-center text-xs text-gray-600">
-            まだデータがありません。プレイして記録を残そう！
+            {t.stats.noData}
           </p>
         ) : (
           <div className="flex flex-col gap-2.5">
@@ -82,7 +84,7 @@ export default function StatsScreen({ onBack }: Props) {
               <div key={s.id} className="flex items-center gap-2.5">
                 <span className="w-6 text-center text-lg">{s.icon}</span>
                 <span className="w-20 shrink-0 truncate text-xs font-bold text-[#E2E8F0]">
-                  {s.name}
+                  {skillText(t, s).name}
                 </span>
                 <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-[#16243A]">
                   <div
@@ -103,7 +105,7 @@ export default function StatsScreen({ onBack }: Props) {
         onClick={onBack}
         className="mt-5 w-full rounded-2xl bg-[#10B981] py-4 text-lg font-black text-white transition-colors hover:bg-emerald-400 active:bg-emerald-600"
       >
-        タイトルへ戻る
+        {t.common.backToTitle}
       </button>
 
       <div className="mt-4">
