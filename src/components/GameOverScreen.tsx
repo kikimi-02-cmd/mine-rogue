@@ -53,8 +53,14 @@ export default function GameOverScreen({
     setTimeout(() => setNotice(null), 2500);
   }
 
+  /** うれしい瞬間（自己ベスト・新しい称号や解放・毎日の挑戦の記録）があったか */
+  const happy = isNewRecord || newTitles.length > 0 || newUnlocks.length > 0 || isDaily;
+
   async function handleShare() {
+    const place = happy ? "top" : "bottom";
+    trackEvent(EVENTS.shareStart, { place, floor_bucket: bucketFloor(floor) });
     const outcome = await shareResult(result);
+    trackEvent(EVENTS.shareDone, { place, outcome, floor_bucket: bucketFloor(floor) });
     if (outcome === "shared" || outcome === "fallback") {
       trackEvent(EVENTS.shareCard, { method: outcome, floor_bucket: bucketFloor(floor) });
     }
@@ -63,11 +69,35 @@ export default function GameOverScreen({
   }
 
   async function handleSave() {
+    trackEvent(EVENTS.shareStart, { place: "save", floor_bucket: bucketFloor(floor) });
     if (await saveResultCard(result)) {
+      trackEvent(EVENTS.shareDone, { place: "save", outcome: "save", floor_bucket: bucketFloor(floor) });
       trackEvent(EVENTS.shareCard, { method: "save", floor_bucket: bucketFloor(floor) });
       flash("画像を保存しました");
     }
   }
+
+  const shareBlock = (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleShare}
+              className="flex-[2] rounded-xl border border-emerald-500/50 bg-[#16243A] py-3 text-sm font-black text-emerald-300 transition-colors hover:bg-[#1E3350]"
+            >
+              📤 結果をシェア
+            </button>
+            <button
+              onClick={handleSave}
+              className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
+            >
+              🖼 画像を保存
+            </button>
+          </div>
+          <p className="h-4 text-center text-xs text-emerald-400" aria-live="polite">
+            {notice ?? ""}
+          </p>
+        </div>
+  );
 
   return (
     <div className="min-h-full flex flex-col bg-arena">
@@ -145,6 +175,9 @@ export default function GameOverScreen({
           </div>
         )}
 
+        {/* うれしい瞬間の直後に共有の入口 */}
+        {happy && shareBlock}
+
         {/* Acquired skills */}
         {skills.length > 0 && (
           <div>
@@ -179,26 +212,7 @@ export default function GameOverScreen({
           </p>
         </div>
 
-        {/* Share */}
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
-            <button
-              onClick={handleShare}
-              className="flex-[2] rounded-xl border border-emerald-500/50 bg-[#16243A] py-3 text-sm font-black text-emerald-300 transition-colors hover:bg-[#1E3350]"
-            >
-              📤 結果をシェア
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
-            >
-              🖼 画像を保存
-            </button>
-          </div>
-          <p className="h-4 text-center text-xs text-emerald-400" aria-live="polite">
-            {notice ?? ""}
-          </p>
-        </div>
+        {!happy && shareBlock}
 
         <button
           onClick={onBackToTitle}
@@ -206,6 +220,10 @@ export default function GameOverScreen({
         >
           🏠 タイトルへ戻る
         </button>
+
+        <p data-ok-to-stop className="text-center text-[11px] text-gray-500">
+          ☕ ここでやめても大丈夫。ベスト記録・図鑑・称号はこの端末に残ります
+        </p>
 
         {totalPlays > 0 && (
           <p className="text-center text-xs text-gray-600">

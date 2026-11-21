@@ -9,6 +9,10 @@ export const EVENTS = {
   runEnd: "run_end",
   dailyDone: "daily_done",
   shareCard: "share_card",
+  /** 共有のボタンを押した（開始） */
+  shareStart: "share_start",
+  /** 共有が終わった（outcome: shared / fallback / cancelled / blocked / save） */
+  shareDone: "share_done",
   loginReward: "login_reward",
 } as const;
 
