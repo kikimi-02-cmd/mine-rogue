@@ -32,6 +32,9 @@ import {
   loadDeepBest,
   saveDeepBest,
   loadProgress,
+  loadTutorialStep,
+  saveTutorialStep,
+  TUTORIAL_STEPS,
 } from "@/lib/storage";
 import {
   getDeepFloorConfig,
@@ -65,6 +68,23 @@ import TitleScreen from "@/components/TitleScreen";
 import StatsScreen from "@/components/StatsScreen";
 import WelcomeModal from "@/components/WelcomeModal";
 import CodexScreen from "@/components/CodexScreen";
+import CoachTip from "@/components/CoachTip";
+
+/** 初回の遊びながらの説明（3 つまで） */
+const TIPS = [
+  {
+    title: "好きなマスをタップして掘ろう",
+    text: "最初の 1 マスとその周りは必ず安全。地雷以外のマスを全部開けるとクリア！",
+  },
+  {
+    title: "数字 = 周りの 8 マスにある地雷の数",
+    text: "「1」の周りに地雷は 1 つ。地雷だと思うマスは下の「🚩 旗」に切り替えて印をつけよう。",
+  },
+  {
+    title: "スキルを 1 つ選んで先へ",
+    text: "3 つから 1 つ選べます。★が多いほどレア。選んだスキルは次のフロアから効きます。",
+  },
+];
 
 /** モードごとのフロアの盤（ふつう・デイリーは基本の表、深層は別の表） */
 function floorConfigFor(mode: RunMode, floor: number) {
@@ -159,6 +179,7 @@ export default function Page() {
   }>({ unlocks: [], titles: [] });
   /** 深層モードの節目でもう 1 つ取れるスキル */
   const bonusPickRef = useRef(false);
+  const [tutorialStep, setTutorialStep] = useState(TUTORIAL_STEPS);
 
   useEffect(() => {
     // localStorage（外の保存先）から読み込んで画面に反映する。初回の描画は SSR と揃えるため effect で行う
@@ -188,6 +209,7 @@ export default function Page() {
     setTodayDaily(loadDailyRecord(today));
     setDeepBest(loadDeepBest());
     setProgress(loadProgress());
+    setTutorialStep(loadTutorialStep());
   }, []);
 
   // Keep hasSpeedRef in sync for use in the timer effect
@@ -408,7 +430,13 @@ export default function Page() {
     setState((prev) => ({ ...prev, gamePhase: "skillSelect" }));
   }, [state.floor, state.skills, state.mode, state.dateKey, progress]);
 
+  const finishTip = useCallback((next: number) => {
+    setTutorialStep(next);
+    saveTutorialStep(next);
+  }, []);
+
   const handleSkillSelect = useCallback((skill: Skill) => {
+    if (tutorialStep < TUTORIAL_STEPS) finishTip(TUTORIAL_STEPS);
     // 深層モードの節目: もう 1 つ選べる（同じスキルは選択肢から外す）
     if (bonusPickRef.current) {
       bonusPickRef.current = false;
@@ -463,7 +491,7 @@ export default function Page() {
         lanterns: 0,
       };
     });
-  }, [progress]);
+  }, [progress, tutorialStep, finishTip]);
 
   const handleUseSkill = useCallback((skillId: string) => {
     if (skillId === "xray") {
@@ -624,6 +652,27 @@ export default function Page() {
     );
   }
 
+  // 初回の説明: いまの場面に合うものを 1 つだけ出す（先へ進んだら前の説明は飛ばす）
+  let tipIndex = -1;
+  if (tutorialStep < TUTORIAL_STEPS && state.mode !== "daily") {
+    if (state.gamePhase === "skillSelect") tipIndex = 2;
+    else if (state.gamePhase === "playing" && state.floor === 1)
+      tipIndex = state.firstClick ? 0 : 1;
+    if (tipIndex < tutorialStep) tipIndex = -1;
+  }
+  const coach =
+    tipIndex >= 0 ? (
+      <CoachTip
+        step={tipIndex + 1}
+        total={TIPS.length}
+        title={TIPS[tipIndex].title}
+        text={TIPS[tipIndex].text}
+        position={tipIndex === 2 ? "inline" : "bottom"}
+        onNext={() => finishTip(tipIndex + 1)}
+        onSkip={() => finishTip(TUTORIAL_STEPS)}
+      />
+    ) : null;
+
   // Codex
   if (state.gamePhase === "codex") {
     return (
@@ -683,6 +732,7 @@ export default function Page() {
   if (state.gamePhase === "skillSelect") {
     return (
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
+        {coach}
         <SkillSelect
           choices={skillChoices}
           onSelect={handleSkillSelect}
@@ -784,6 +834,7 @@ export default function Page() {
           </div>
         </div>
       </main>
+      {coach}
     </div>
   );
 }

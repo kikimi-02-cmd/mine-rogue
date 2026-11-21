@@ -147,3 +147,21 @@ export function loadProgress(): { best: number; plays: number } {
     plays: loadPlayCount(),
   };
 }
+
+// ─── 初回の遊びながらの説明（何個目まで見たか） ─────────────
+
+const TUTORIAL_KEY = "mine_rogue_tutorial";
+export const TUTORIAL_STEPS = 3;
+
+export function loadTutorialStep(): number {
+  if (typeof window === "undefined") return TUTORIAL_STEPS;
+  const v = parseInt(localStorage.getItem(TUTORIAL_KEY) ?? "", 10);
+  if (Number.isFinite(v)) return v;
+  // 既に遊んだことのある人には出さない
+  return loadPlayCount() > 0 ? TUTORIAL_STEPS : 0;
+}
+
+export function saveTutorialStep(step: number): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(TUTORIAL_KEY, String(step));
+}
