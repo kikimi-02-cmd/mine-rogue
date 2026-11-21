@@ -1,12 +1,19 @@
 "use client";
 import Link from "next/link";
 import AdUnit from "@/components/AdUnit";
+import type { StreakState } from "@/lib/daily";
+import type { DailyRecord } from "@/lib/storage";
 
 interface Props {
   bestFloor: number;
   totalPlays: number;
   onStart: () => void;
   onShowStats: () => void;
+  streak: StreakState | null;
+  lanterns: number;
+  dailyNumber: number;
+  todayDaily: DailyRecord | null;
+  onStartDaily: () => void;
 }
 
 export default function TitleScreen({
@@ -14,6 +21,11 @@ export default function TitleScreen({
   totalPlays,
   onStart,
   onShowStats,
+  streak,
+  lanterns,
+  dailyNumber,
+  todayDaily,
+  onStartDaily,
 }: Props) {
   return (
     <div className="flex h-full flex-col items-center justify-between bg-arena px-6 py-10">
@@ -33,6 +45,7 @@ export default function TitleScreen({
         </div>
 
         {/* Best record */}
+        <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-3 rounded-2xl border border-yellow-500/30 bg-[#0F1B2E] px-6 py-3">
           <span className="text-2xl">🏆</span>
           <div className="text-left">
@@ -43,6 +56,22 @@ export default function TitleScreen({
               B{bestFloor}F
             </p>
           </div>
+        </div>
+        {streak && streak.count > 0 && (
+          <div className="flex gap-2 text-[11px] font-bold">
+            <span className="rounded-lg bg-[#16243A] px-2.5 py-1 text-orange-300">
+              🔥 {streak.count}日連続
+            </span>
+            <span className="rounded-lg bg-[#16243A] px-2.5 py-1 text-sky-300">
+              🎫 {streak.freezes}
+            </span>
+            {lanterns > 0 && (
+              <span className="rounded-lg bg-[#16243A] px-2.5 py-1 text-amber-300">
+                🔦 {lanterns}
+              </span>
+            )}
+          </div>
+        )}
         </div>
       </div>
 
@@ -55,6 +84,23 @@ export default function TitleScreen({
         >
           ゲームスタート
         </button>
+        {todayDaily ? (
+          <div className="w-full rounded-xl border border-sky-500/30 bg-[#0F1B2E] py-2.5 text-center text-sm font-bold text-sky-200">
+            📅 デイリー #{dailyNumber} 記録 B{todayDaily.floor}F
+            <span className="ml-1 text-[11px] font-normal text-gray-500">・また明日</span>
+          </div>
+        ) : (
+          <button
+            data-daily-start
+            onClick={onStartDaily}
+            className="w-full rounded-xl border border-sky-500/50 bg-[#10233D] py-3 text-base font-black text-sky-200 transition-colors hover:bg-[#15304F]"
+          >
+            📅 デイリー #{dailyNumber}
+            <span className="ml-1.5 text-[11px] font-bold text-sky-400/80">
+              全員同じ盤・1日1回
+            </span>
+          </button>
+        )}
         <div className="flex gap-3">
           <button
             onClick={onShowStats}

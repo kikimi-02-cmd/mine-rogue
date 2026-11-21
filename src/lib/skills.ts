@@ -11,27 +11,35 @@ interface SkillDef {
   type: "active" | "passive";
 }
 
+/** 並べ替え（Fisher–Yates）。たねつき乱数でもブラウザによらず同じ結果になる */
+export function shuffle<T>(arr: T[], rand: () => number = Math.random): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export function getRandomSkillChoices(
   count: number = 3,
   hasLucky: boolean = false,
+  rand: () => number = Math.random,
 ): Skill[] {
   const pool = skillsData as SkillDef[];
   if (hasLucky) {
-    const rare = pool.filter((s) => s.rarity === 3);
-    const nonRare = pool.filter((s) => s.rarity < 3);
-    const shuffledRare = [...rare].sort(() => Math.random() - 0.5);
-    const shuffledNonRare = [...nonRare].sort(() => Math.random() - 0.5);
-    const guaranteed = shuffledRare[0];
-    const rest = [...shuffledRare.slice(1), ...shuffledNonRare].sort(
-      () => Math.random() - 0.5,
-    );
+    const rare = shuffle(pool.filter((s) => s.rarity === 3), rand);
+    const nonRare = shuffle(pool.filter((s) => s.rarity < 3), rand);
+    const guaranteed = rare[0];
+    const rest = shuffle([...rare.slice(1), ...nonRare], rand);
     return [guaranteed, ...rest.slice(0, count - 1)].map((s) => ({
       ...s,
       used: false,
     }));
   }
-  const shuffled = [...pool].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count).map((s) => ({ ...s, used: false }));
+  return shuffle(pool, rand)
+    .slice(0, count)
+    .map((s) => ({ ...s, used: false }));
 }
 
 export function applyDetector(board: Cell[][], size: number): Cell[][] {
@@ -86,6 +94,5 @@ export function getAutoRevealCells(
       }
     }
   }
-  const shuffled = safe.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
+  return shuffle(safe).slice(0, count);
 }

@@ -15,6 +15,7 @@ export function generateBoard(
   mineCount: number,
   firstX: number,
   firstY: number,
+  rand: () => number = Math.random,
 ): Cell[][] {
   const board = createEmptyBoard(size);
 
@@ -33,8 +34,8 @@ export function generateBoard(
   // 地雷をランダム配置
   let placed = 0;
   while (placed < mineCount) {
-    const x = Math.floor(Math.random() * size);
-    const y = Math.floor(Math.random() * size);
+    const x = Math.floor(rand() * size);
+    const y = Math.floor(rand() * size);
     if (!board[y][x].isMine && !safeZone.has(`${x},${y}`)) {
       board[y][x].isMine = true;
       placed++;

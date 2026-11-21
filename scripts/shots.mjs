@@ -48,6 +48,12 @@ for (const size of SIZES) {
   await page.goto(BASE);
   await page.waitForTimeout(700);
   if (want("title")) await shot("title");
+  // ログインボーナスの知らせが出ていれば閉じる
+  if (await page.locator("[data-welcome-close]").count()) {
+    await page.locator("[data-welcome-close]").click();
+    await page.waitForTimeout(300);
+    if (want("title")) await shot("title-after");
+  }
   if (want("stats") && (await page.getByText("📊 統計").count())) {
     await page.getByText("📊 統計").click();
     await page.waitForTimeout(400);

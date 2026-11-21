@@ -15,6 +15,8 @@ interface Props {
   isNewRecord: boolean;
   revealedCount: number;
   totalPlays: number;
+  /** 毎日の挑戦なら「デイリー #N」 */
+  dailyLabel?: string;
   onRestart: () => void;
   onBackToTitle: () => void;
 }
@@ -27,11 +29,12 @@ export default function GameOverScreen({
   isNewRecord,
   revealedCount,
   totalPlays,
+  dailyLabel,
   onRestart,
   onBackToTitle,
 }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
-  const result = { floor, skills, timer, isNewRecord };
+  const result = { floor, skills, timer, isNewRecord, label: dailyLabel };
 
   function flash(msg: string) {
     setNotice(msg);
@@ -68,6 +71,11 @@ export default function GameOverScreen({
         <h2 className="text-3xl font-black text-white tracking-[0.2em]">
           GAME OVER
         </h2>
+        {dailyLabel && (
+          <p className="mt-2 text-sm font-black text-sky-300">
+            📅 {dailyLabel} の記録を残しました
+          </p>
+        )}
         {isNewRecord && (
           <p className="mt-2 text-base font-black tracking-widest text-yellow-400 animate-record-glow">
             🎉 NEW RECORD!
