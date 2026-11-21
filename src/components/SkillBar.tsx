@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import type { Skill } from "@/lib/types";
+import { useI18n, skillText } from "@/i18n";
 
 interface Props {
   skills: Skill[];
@@ -17,6 +18,7 @@ function rarityBorderColor(rarity: 1 | 2 | 3): string {
 export default function SkillBar({ skills, onUseSkill, activeSkillId }: Props) {
   const [tooltipIdx, setTooltipIdx] = useState<number | null>(null);
   const barRef = useRef<HTMLDivElement>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (tooltipIdx === null) return;
@@ -65,7 +67,7 @@ export default function SkillBar({ skills, onUseSkill, activeSkillId }: Props) {
                 borderColor: rarityBorderColor(skill.rarity),
                 background: skill.used ? "#0F172A" : "#16243A",
               }}
-              title={`${skill.name}: ${skill.description}`}
+              title={`${skillText(t, skill).name}: ${skillText(t, skill).description}`}
             >
               {skill.icon}
               {skill.used && (
@@ -86,16 +88,16 @@ export default function SkillBar({ skills, onUseSkill, activeSkillId }: Props) {
           onClick={() => setTooltipIdx(null)}
         >
           <p className="text-sm font-bold text-white">
-            {tooltipSkill.icon} {tooltipSkill.name}
+            {tooltipSkill.icon} {skillText(t, tooltipSkill).name}
           </p>
           <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">
-            {tooltipSkill.description}
+            {skillText(t, tooltipSkill).description}
           </p>
           {tooltipSkill.used && (
-            <p className="text-xs text-red-400 mt-1">使用済み</p>
+            <p className="text-xs text-red-400 mt-1">{t.skillBar.used}</p>
           )}
           {tooltipSkill.type === "passive" && !tooltipSkill.used && (
-            <p className="text-xs text-emerald-400 mt-1">パッシブ効果（常時発動）</p>
+            <p className="text-xs text-emerald-400 mt-1">{t.skillBar.passive}</p>
           )}
         </div>
       )}

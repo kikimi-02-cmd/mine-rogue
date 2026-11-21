@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import type { GameState, GamePhase, Skill, RunMode } from "@/lib/types";
 import {
   createEmptyBoard,
@@ -73,22 +73,16 @@ import StatsScreen from "@/components/StatsScreen";
 import WelcomeModal from "@/components/WelcomeModal";
 import CodexScreen from "@/components/CodexScreen";
 import CoachTip from "@/components/CoachTip";
-
-/** 初回の遊びながらの説明（3 つまで） */
-const TIPS = [
-  {
-    title: "好きなマスをタップして掘ろう",
-    text: "最初の 1 マスとその周りは必ず安全。地雷以外のマスを全部開けるとクリア！",
-  },
-  {
-    title: "数字 = 周りの 8 マスにある地雷の数",
-    text: "「1」の周りに地雷は 1 つ。地雷だと思うマスは下の「🚩 旗」に切り替えて印をつけよう。",
-  },
-  {
-    title: "スキルを 1 つ選んで先へ",
-    text: "3 つから 1 つ選べます。★が多いほどレア。選んだスキルは次のフロアから効きます。",
-  },
-];
+import { IS_DIST } from "@/lib/dist";
+import {
+  DICTS,
+  I18nProvider,
+  isCrawler,
+  loadLangChoice,
+  resolveLang,
+  saveLangChoice,
+  type Lang,
+} from "@/i18n";
 
 /** モードごとのフロアの盤（ふつう・デイリーは基本の表、深層は別の表） */
 function floorConfigFor(mode: RunMode, floor: number) {
@@ -155,8 +149,15 @@ function createInitialState(
   };
 }
 
-export default function Page() {
+interface GameProps {
+  /** そのページの言葉（/ は "auto" = ブラウザに合わせる、/en は "en"） */
+  route: "auto" | Lang;
+}
+
+export default function Game({ route }: GameProps) {
   const [mounted, setMounted] = useState(false);
+  const [lang, setLangState] = useState<Lang>(route === "en" ? "en" : "ja");
+  const t = DICTS[lang];
   const [state, setState] = useState<GameState>(() =>
     createInitialState(1, "title"),
   );
@@ -193,6 +194,15 @@ export default function Page() {
     // localStorage（外の保存先）から読み込んで画面に反映する。初回の描画は SSR と揃えるため effect で行う
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+    setLangState(
+      resolveLang({
+        choice: loadLangChoice(),
+        isDist: IS_DIST,
+        route,
+        languages: navigator.languages?.length ? navigator.languages : [navigator.language],
+        crawler: isCrawler(navigator.userAgent),
+      }),
+    );
     setState(createInitialState(loadBestFloor(), "title"));
     setTotalPlays(loadPlayCount());
 
@@ -232,7 +242,29 @@ export default function Page() {
     setDeepBest(loadDeepBest());
     setProgress(loadProgress());
     setTutorialStep(loadTutorialStep());
+  }, [route]);
+
+  // 画面の言葉に合わせて <html lang> とタブの題を直す（/ を英語で開いたときなど）
+  // （Next.js が後から題を書き戻すことがあるので、題が変わったら言葉の題に直す）
+  useEffect(() => {
+    if (!mounted) return;
+    document.documentElement.lang = lang;
+    const want = DICTS[lang].meta.title;
+    const apply = () => {
+      if (document.title !== want) document.title = want;
+    };
+    apply();
+    const obs = new MutationObserver(apply);
+    obs.observe(document.head, { subtree: true, childList: true, characterData: true });
+    return () => obs.disconnect();
+  }, [mounted, lang]);
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    saveLangChoice(next);
+    trackEvent(EVENTS.langSwitch, { lang: next });
   }, []);
+  const i18n = { lang, t, setLang };
 
   // Keep hasSpeedRef in sync for use in the timer effect
   useEffect(() => {
@@ -659,13 +691,17 @@ export default function Page() {
     setState((prev) => ({ ...prev, gamePhase: "codex" }));
   }, []);
 
+  const wrap = (node: ReactNode) => (
+    <I18nProvider value={i18n}>{node}</I18nProvider>
+  );
+
   if (!mounted) {
     return <div className="h-[100dvh] bg-[#0A1628]" />;
   }
 
   // Title
   if (state.gamePhase === "title") {
-    return (
+    return wrap(
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <TitleScreen
           bestFloor={state.bestFloor}
@@ -717,9 +753,9 @@ export default function Page() {
     tipIndex >= 0 ? (
       <CoachTip
         step={tipIndex + 1}
-        total={TIPS.length}
-        title={TIPS[tipIndex].title}
-        text={TIPS[tipIndex].text}
+        total={t.coach.tips.length}
+        title={t.coach.tips[tipIndex].title}
+        text={t.coach.tips[tipIndex].text}
         position={tipIndex === 2 ? "inline" : "bottom"}
         onNext={() => finishTip(tipIndex + 1)}
         onSkip={() => finishTip(TUTORIAL_STEPS)}
@@ -728,7 +764,7 @@ export default function Page() {
 
   // Codex
   if (state.gamePhase === "codex") {
-    return (
+    return wrap(
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <CodexScreen progress={progress} onBack={handleBackToTitle} />
       </div>
@@ -737,7 +773,7 @@ export default function Page() {
 
   // Stats
   if (state.gamePhase === "stats") {
-    return (
+    return wrap(
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <StatsScreen onBack={handleBackToTitle} />
       </div>
@@ -754,7 +790,7 @@ export default function Page() {
 
   // Game Over
   if (state.gamePhase === "gameOver") {
-    return (
+    return wrap(
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <GameOverScreen
           floor={state.floor}
@@ -766,9 +802,9 @@ export default function Page() {
           totalPlays={totalPlays}
           dailyLabel={
             state.mode === "daily" && state.dateKey
-              ? `デイリー #${dailyNumber(state.dateKey)}`
+              ? t.labels.daily(dailyNumber(state.dateKey))
               : state.mode === "deep"
-                ? "深層モード"
+                ? t.labels.deep
                 : undefined
           }
           isDaily={state.mode === "daily"}
@@ -784,7 +820,7 @@ export default function Page() {
 
   // Skill Select
   if (state.gamePhase === "skillSelect") {
-    return (
+    return wrap(
       <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         {coach}
         <SkillSelect
@@ -797,7 +833,7 @@ export default function Page() {
   }
 
   // Playing / Cleared
-  return (
+  return wrap(
     <div className="h-[100dvh] flex flex-col bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-hidden">
       <Header
         floor={state.floor}
@@ -841,13 +877,13 @@ export default function Page() {
           </div>
           {state.mode === "deep" && (
             <p className="text-xs font-bold text-orange-300 text-center">
-              🌋 深層モード
-              {getDeepFloorConfig(state.floor).milestone && " ・ 節目のフロア（クリアでスキル2つ）"}
+              {t.play.deepBanner}
+              {getDeepFloorConfig(state.floor).milestone && t.play.milestone}
             </p>
           )}
           {state.mode === "daily" && state.floor === 1 && (
             <p className="text-xs font-bold text-sky-300 text-center">
-              📅 デイリー #{dailyNumber(state.dateKey ?? todayKey)} ・ 全員同じ盤
+              {t.play.dailyBanner(dailyNumber(state.dateKey ?? todayKey))}
             </p>
           )}
           {state.lanterns > 0 && state.floor === 1 && (
@@ -856,12 +892,12 @@ export default function Page() {
               onClick={handleLantern}
               className="rounded-xl border border-amber-400/50 bg-[#2A2410] px-4 py-1.5 text-sm font-black text-amber-300 active:scale-95"
             >
-              🔦 灯りで安全なマスを開ける ×{state.lanterns}
+              {t.play.lantern(state.lanterns)}
             </button>
           )}
           {state.firstClick && state.floor === 1 && (
             <p className="text-xs text-[#5B7799] text-center">
-              安全そうなマスをタップして開始{state.bestFloor > 0 && ` ・ ベスト B${state.bestFloor}F`}
+              {t.play.tapToStart}{state.bestFloor > 0 && t.play.bestSuffix(state.bestFloor)}
             </p>
           )}
           <div className="flex items-center justify-center gap-4">
@@ -873,7 +909,7 @@ export default function Page() {
                   : "bg-[#16243A] text-[#64748B] hover:bg-[#1E3350] hover:text-gray-300"
               }`}
             >
-              ⛏ 掘る
+              {t.play.dig}
             </button>
             <button
               onClick={() => setFlagMode(true)}
@@ -883,7 +919,7 @@ export default function Page() {
                   : "bg-[#16243A] text-[#64748B] hover:bg-[#1E3350] hover:text-gray-300"
               }`}
             >
-              🚩 旗
+              {t.play.flag}
             </button>
           </div>
         </div>

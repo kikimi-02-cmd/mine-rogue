@@ -2,23 +2,18 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import Footer from "@/components/Footer";
+import { languageAlternates, ogImage } from "@/lib/seo";
 
 const TITLE = "プライバシーポリシー｜Mine Rogue";
 const DESCRIPTION =
   "Mine Rogue（地雷の盤を潜るローグライク）のプライバシーポリシー。端末の中に残す記録、計測と広告のしくみ、問い合わせの窓口について。";
 
-// 共有用の題・説明・URL をこのページのものにする（画像はトップと同じ）
-const IMAGE = {
-  url: "/opengraph-image.png",
-  width: 1200,
-  height: 630,
-  alt: "Mine Rogue — 数字のマスと旗の盤、スキルのアイコン。地雷の盤を潜るローグライク",
-};
+const IMAGE = ogImage("ja");
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  alternates: { canonical: "/privacy" },
+  alternates: { canonical: "/privacy", ...languageAlternates("/privacy", "/en/privacy") },
   openGraph: {
     type: "article",
     locale: "ja_JP",
@@ -26,6 +21,7 @@ export const metadata: Metadata = {
     siteName: "Mine Rogue",
     title: TITLE,
     description: DESCRIPTION,
+    alternateLocale: ["en_US"],
     images: [IMAGE],
   },
   twitter: {
@@ -155,7 +151,7 @@ export default function PrivacyPage() {
           </Link>
         </div>
       </div>
-      <Footer />
+      <Footer lang="ja" altHref="/en/privacy" />
     </div>
   );
 }

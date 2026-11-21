@@ -1,4 +1,6 @@
+"use client";
 import { IS_DIST } from "@/lib/dist";
+import { useI18n } from "@/i18n";
 
 const APPS = [
   {
@@ -25,11 +27,12 @@ const APPS = [
 ];
 
 export default function CrossPromo() {
-  // 配信版では外部へのリンクを出さない
-  if (IS_DIST) return null;
+  const { t, lang } = useI18n();
+  // 配信版では外部へのリンクを出さない。紹介するアプリは日本語だけなので、英語の画面でも出さない
+  if (IS_DIST || lang !== "ja") return null;
   return (
     <div className="mt-4 px-4">
-      <p className="text-xs font-bold text-gray-500 mb-2">おすすめアプリ</p>
+      <p className="text-xs font-bold text-gray-500 mb-2">{t.crossPromo.heading}</p>
       <div className="flex flex-col gap-2">
         {APPS.map((app) => (
           <a
@@ -44,7 +47,7 @@ export default function CrossPromo() {
               <p className="text-xs font-bold text-white">{app.name}</p>
               <p className="text-[10px] text-gray-400">{app.desc}</p>
             </div>
-            <span className="text-[10px] text-gray-500 shrink-0">開く →</span>
+            <span className="text-[10px] text-gray-500 shrink-0">{t.crossPromo.open}</span>
           </a>
         ))}
       </div>

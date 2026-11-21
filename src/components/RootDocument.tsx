@@ -1,46 +1,55 @@
 import type { Metadata } from "next";
-import "./globals.css";
 import { IS_DIST } from "@/lib/dist";
 import NoKeyScroll from "@/components/NoKeyScroll";
+import type { Lang } from "@/i18n/lang";
+import { ja } from "@/i18n/ja";
+import { en } from "@/i18n/en";
+import { SITE_URL, languageAlternates, ogImage } from "@/lib/seo";
 
-const SITE_URL = "https://mine-rogue.vercel.app";
-const TITLE = "Mine Rogue｜地雷の盤を潜るローグライク";
-const DESCRIPTION =
-  "マインスイーパーのルールで地下へ潜るローグライク。フロアを開けるたびにスキルを1つ選び、地雷を踏んだら最初から。毎日の挑戦・深層モード・スキル図鑑つき。登録不要・無料でブラウザですぐ遊べます。";
+/** 入口の題・説明・共有用の情報（/ と /en） */
+export function rootMetadata(lang: Lang): Metadata {
+  const t = lang === "ja" ? ja : en;
+  const path = lang === "ja" ? "/" : "/en";
+  const share: Metadata = {
+    metadataBase: new URL(SITE_URL),
+    alternates: { canonical: path, ...languageAlternates("/", "/en") },
+    openGraph: {
+      type: "website",
+      locale: lang === "ja" ? "ja_JP" : "en_US",
+      alternateLocale: lang === "ja" ? ["en_US"] : ["ja_JP"],
+      url: path,
+      siteName: "Mine Rogue",
+      title: t.meta.title,
+      description: t.meta.description,
+      images: [ogImage(lang)],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.meta.title,
+      description: t.meta.description,
+      images: [ogImage(lang)],
+    },
+  };
+  return {
+    title: t.meta.title,
+    description: t.meta.description,
+    manifest: "/manifest.json",
+    applicationName: "Mine Rogue",
+    // 配信版はサイトの外に置くので、サイトへのリンクを含む共有用の情報は付けない
+    ...(IS_DIST ? {} : share),
+  };
+}
 
-const SHARE_METADATA: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  openGraph: {
-    type: "website",
-    locale: "ja_JP",
-    url: SITE_URL,
-    siteName: "Mine Rogue",
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-};
-
-export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  manifest: "/manifest.json",
-  applicationName: "Mine Rogue",
-  // 配信版はサイトの外に置くので、サイトへのリンクを含む共有用の情報は付けない
-  ...(IS_DIST ? {} : SHARE_METADATA),
-};
-
-export default function RootLayout({
+export default function RootDocument({
+  lang,
   children,
 }: {
+  lang: Lang;
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja">
+    <html lang={lang}>
+      {/* eslint-disable-next-line @next/next/no-head-element -- ルートのレイアウト（app/(ja)・app/(en)）の <head> */}
       <head>
         <meta
           name="viewport"

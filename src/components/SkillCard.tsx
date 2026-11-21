@@ -1,4 +1,6 @@
+"use client";
 import type { Skill } from "@/lib/types";
+import { useI18n, skillText } from "@/i18n";
 
 interface Props {
   skill: Skill;
@@ -6,7 +8,6 @@ interface Props {
 }
 
 interface RarityTheme {
-  label: string;
   text: string;
   border: string;
   glow: string;
@@ -16,7 +17,6 @@ interface RarityTheme {
 
 const RARITY: Record<1 | 2 | 3, RarityTheme> = {
   1: {
-    label: "コモン",
     text: "#34D399",
     border: "#10B981",
     glow: "rgba(16,185,129,0.32)",
@@ -24,7 +24,6 @@ const RARITY: Record<1 | 2 | 3, RarityTheme> = {
     chip: "#10B981",
   },
   2: {
-    label: "レア",
     text: "#60A5FA",
     border: "#3B82F6",
     glow: "rgba(59,130,246,0.38)",
@@ -32,7 +31,6 @@ const RARITY: Record<1 | 2 | 3, RarityTheme> = {
     chip: "#3B82F6",
   },
   3: {
-    label: "エピック",
     text: "#C084FC",
     border: "#A855F7",
     glow: "rgba(168,85,247,0.5)",
@@ -44,6 +42,8 @@ const RARITY: Record<1 | 2 | 3, RarityTheme> = {
 export default function SkillCard({ skill, onClick }: Props) {
   const t = RARITY[skill.rarity];
   const isEpic = skill.rarity === 3;
+  const { t: d } = useI18n();
+  const text = skillText(d, skill);
 
   return (
     <button
@@ -77,22 +77,22 @@ export default function SkillCard({ skill, onClick }: Props) {
               className="text-[10px] font-black tracking-wider"
               style={{ color: t.text }}
             >
-              {"★".repeat(skill.rarity)} {t.label}
+              {"★".repeat(skill.rarity)} {d.skillCard.rarity[skill.rarity]}
             </span>
             <span
               className="rounded px-1.5 py-0.5 text-[9px] font-bold text-white/90"
               style={{ background: skill.type === "active" ? "#334155" : t.chip }}
             >
-              {skill.type === "active" ? "発動" : "常時"}
+              {skill.type === "active" ? d.skillCard.active : d.skillCard.passive}
             </span>
           </div>
           <p className="truncate text-base font-black text-white">
-            {skill.name}
+            {text.name}
           </p>
         </div>
       </div>
       <p className="relative mt-2 text-xs leading-relaxed text-gray-300">
-        {skill.description}
+        {text.description}
       </p>
     </button>
   );
