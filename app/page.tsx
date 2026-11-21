@@ -58,6 +58,7 @@ import {
   type VisitResult,
 } from "@/lib/daily";
 import { trackEvent } from "@/lib/gtag";
+import { EVENTS, bucketFloor, bucketMinutes } from "@/lib/events";
 import Header from "@/components/Header";
 import Board from "@/components/Board";
 import SkillBar from "@/components/SkillBar";
@@ -196,7 +197,7 @@ export default function Page() {
     if (v.firstVisitToday && v.lanterns > 0) {
       lanterns = Math.min(MAX_LANTERNS, lanterns + v.lanterns);
       saveLanterns(lanterns);
-      trackEvent("login_reward", {
+      trackEvent(EVENTS.loginReward, {
         lanterns: v.lanterns,
         streak: bucketStreak(v.streak.count),
         welcome_back: v.welcomeBack,
@@ -235,11 +236,18 @@ export default function Page() {
           timer: state.timer,
         });
         if (saved) {
-          trackEvent("daily_done", { floor: state.floor });
+          trackEvent(EVENTS.dailyDone, { floor_bucket: bucketFloor(state.floor) });
           // eslint-disable-next-line react-hooks/set-state-in-effect
           setTodayDaily(loadDailyRecord(state.dateKey));
         }
       }
+      trackEvent(EVENTS.runEnd, {
+        mode: state.mode,
+        floor_bucket: bucketFloor(state.floor),
+        minutes: bucketMinutes(state.timer),
+        skill_count: state.skills.length,
+      });
+      // 以前からのイベント（既存の集計を壊さないため残す）
       trackEvent("game_over", {
         floor: state.floor,
         revealed,
@@ -413,7 +421,7 @@ export default function Page() {
   }, []);
 
   const handleFloorClearContinue = useCallback(() => {
-    trackEvent("floor_clear", { floor: state.floor });
+    trackEvent(EVENTS.floorClear, { floor: state.floor, mode: state.mode });
     const hasMagnet = state.skills.some((s) => s.id === "magnet");
     const hasLucky = state.skills.some((s) => s.id === "lucky");
     const count = hasMagnet ? 4 : 3;
@@ -549,8 +557,9 @@ export default function Page() {
   const startRun = useCallback(
     (source: string, mode: "normal" | "deep") => {
       resetTransientState();
-      trackEvent("game_start", { source, mode });
       const lanterns = loadLanterns();
+      trackEvent(EVENTS.runStart, { source, mode, lanterns });
+      trackEvent("game_start", { source, mode });
       saveLanterns(0);
       setPendingLanterns(0);
       setState(createInitialState(loadBestFor(mode), "playing", { lanterns, mode }));
@@ -565,6 +574,7 @@ export default function Page() {
     const today = localDateKey();
     if (loadDailyRecord(today)) return;
     resetTransientState();
+    trackEvent(EVENTS.runStart, { source: "daily", mode: "daily" });
     trackEvent("game_start", { source: "daily" });
     setTodayKey(today);
     setState(

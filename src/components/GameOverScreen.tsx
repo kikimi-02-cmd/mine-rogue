@@ -5,6 +5,7 @@ import type { Skill } from "@/lib/types";
 import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
 import { trackEvent } from "@/lib/gtag";
+import { EVENTS, bucketFloor } from "@/lib/events";
 import { formatTime, shareResult, saveResultCard } from "@/lib/share";
 import skillsData from "@/data/skills.json";
 import type { TitleDef, UnlockDef } from "@/lib/progress";
@@ -52,7 +53,7 @@ export default function GameOverScreen({
   async function handleShare() {
     const outcome = await shareResult(result);
     if (outcome === "shared" || outcome === "fallback") {
-      trackEvent("share_card", { method: outcome, floor });
+      trackEvent(EVENTS.shareCard, { method: outcome, floor_bucket: bucketFloor(floor) });
     }
     if (outcome === "fallback") flash("画像を保存し、文をコピーしました");
     if (outcome === "blocked") flash("共有できませんでした");
@@ -60,7 +61,7 @@ export default function GameOverScreen({
 
   async function handleSave() {
     if (await saveResultCard(result)) {
-      trackEvent("share_card", { method: "save", floor });
+      trackEvent(EVENTS.shareCard, { method: "save", floor_bucket: bucketFloor(floor) });
       flash("画像を保存しました");
     }
   }
