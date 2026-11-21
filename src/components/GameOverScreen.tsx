@@ -6,6 +6,8 @@ import CrossPromo from "./CrossPromo";
 import AdBanner from "./AdBanner";
 import { trackEvent } from "@/lib/gtag";
 import { formatTime, shareResult, saveResultCard } from "@/lib/share";
+import skillsData from "@/data/skills.json";
+import type { TitleDef, UnlockDef } from "@/lib/progress";
 
 interface Props {
   floor: number;
@@ -17,6 +19,9 @@ interface Props {
   totalPlays: number;
   /** 毎日の挑戦なら「デイリー #N」 */
   dailyLabel?: string;
+  isDaily?: boolean;
+  newUnlocks?: UnlockDef[];
+  newTitles?: TitleDef[];
   onRestart: () => void;
   onBackToTitle: () => void;
 }
@@ -30,6 +35,9 @@ export default function GameOverScreen({
   revealedCount,
   totalPlays,
   dailyLabel,
+  isDaily = false,
+  newUnlocks = [],
+  newTitles = [],
   onRestart,
   onBackToTitle,
 }: Props) {
@@ -71,7 +79,7 @@ export default function GameOverScreen({
         <h2 className="text-3xl font-black text-white tracking-[0.2em]">
           GAME OVER
         </h2>
-        {dailyLabel && (
+        {isDaily && dailyLabel && (
           <p className="mt-2 text-sm font-black text-sky-300">
             📅 {dailyLabel} の記録を残しました
           </p>
@@ -111,6 +119,27 @@ export default function GameOverScreen({
             </div>
           </div>
         </div>
+
+        {/* ラン同士で残るもの: 新しい称号・解放 */}
+        {(newTitles.length > 0 || newUnlocks.length > 0) && (
+          <div className="animate-pop-in rounded-2xl border border-yellow-500/40 bg-[#2A2410] p-3 text-center">
+            {newTitles.map((t) => (
+              <p key={t.floor} className="text-sm font-black text-yellow-200">
+                {t.icon} 称号「{t.name}」を手に入れた！
+              </p>
+            ))}
+            {newUnlocks.map((u) => {
+              const meta = (skillsData as { id: string; name: string; icon: string }[]).find(
+                (m) => m.id === u.skillId,
+              );
+              return (
+                <p key={u.skillId} className="text-sm font-black text-emerald-300">
+                  🔓 新スキル「{meta?.icon} {meta?.name}」が選択肢に入ります
+                </p>
+              );
+            })}
+          </div>
+        )}
 
         {/* Acquired skills */}
         {skills.length > 0 && (

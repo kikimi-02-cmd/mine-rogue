@@ -1,5 +1,5 @@
 // 画面の写しを撮る。使い方: npm run build && npx next start -p 3100 & ; node scripts/shots.mjs <出力フォルダ> [scene...]
-// scene: title / play / gameover / stats / daily / codex（無いものは飛ばす）
+// scene: title / play / gameover / stats / daily / deep / codex（無いものは飛ばす）
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 const { chromium } = require("playwright"); // NODE_PATH=$(npm root -g) で全体の playwright を使う
@@ -40,6 +40,14 @@ for (const size of SIZES) {
     viewport: { width: size.width, height: size.height },
     deviceScaleFactor: 2,
   });
+  // SEED='{"mine_rogue_best_floor":"6"}' で保存の中身を最初に入れておける（既にあれば上書きしない）
+  if (process.env.SEED) {
+    await ctx.addInitScript((seed) => {
+      for (const [k, v] of Object.entries(JSON.parse(seed))) {
+        if (localStorage.getItem(k) === null) localStorage.setItem(k, v);
+      }
+    }, process.env.SEED);
+  }
   const page = await ctx.newPage();
   const shot = (scene) =>
     page.screenshot({ path: path.join(OUT, `${scene}-${size.name}.png`) });
@@ -65,6 +73,13 @@ for (const size of SIZES) {
     await page.getByText("📘 図鑑").click();
     await page.waitForTimeout(400);
     await shot("codex");
+    await page.goto(BASE);
+    await page.waitForTimeout(500);
+  }
+  if (want("deep") && (await page.locator("[data-deep-start]").count())) {
+    await page.locator("[data-deep-start]").click();
+    await page.waitForTimeout(500);
+    await shot("deep");
     await page.goto(BASE);
     await page.waitForTimeout(500);
   }

@@ -124,3 +124,26 @@ export function saveDailyRecord(rec: DailyRecord): boolean {
   localStorage.setItem(DAILY_KEY, JSON.stringify(kept));
   return true;
 }
+
+// ─── 深層モード・解放（足すだけ） ─────────────────────
+
+const DEEP_BEST_KEY = "mine_rogue_deep_best";
+
+export function loadDeepBest(): number {
+  if (typeof window === "undefined") return 0;
+  const v = parseInt(localStorage.getItem(DEEP_BEST_KEY) ?? "0", 10);
+  return Number.isFinite(v) ? v : 0;
+}
+
+export function saveDeepBest(floor: number): void {
+  if (typeof window === "undefined") return;
+  if (floor > loadDeepBest()) localStorage.setItem(DEEP_BEST_KEY, String(floor));
+}
+
+/** 解放・称号の判定に使う進み具合（どのモードも含めた一番深い到達と通算のラン数） */
+export function loadProgress(): { best: number; plays: number } {
+  return {
+    best: Math.max(loadBestFloor(), loadDeepBest()),
+    plays: loadPlayCount(),
+  };
+}

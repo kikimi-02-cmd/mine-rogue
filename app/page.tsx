@@ -29,7 +29,21 @@ import {
   loadDailyRecord,
   saveDailyRecord,
   type DailyRecord,
+  loadDeepBest,
+  saveDeepBest,
+  loadProgress,
 } from "@/lib/storage";
+import {
+  getDeepFloorConfig,
+  isSkillAvailable,
+  newlyUnlocked,
+  newlyEarnedTitles,
+  DEEP_UNLOCK_FLOOR,
+  UNLOCKS,
+  type Progress,
+  type TitleDef,
+  type UnlockDef,
+} from "@/lib/progress";
 import {
   localDateKey,
   registerVisit,
@@ -50,6 +64,25 @@ import GameOverScreen from "@/components/GameOverScreen";
 import TitleScreen from "@/components/TitleScreen";
 import StatsScreen from "@/components/StatsScreen";
 import WelcomeModal from "@/components/WelcomeModal";
+import CodexScreen from "@/components/CodexScreen";
+
+/** モードごとのフロアの盤（ふつう・デイリーは基本の表、深層は別の表） */
+function floorConfigFor(mode: RunMode, floor: number) {
+  return mode === "deep" ? getDeepFloorConfig(floor) : getFloorConfig(floor);
+}
+
+/** モードごとのベスト（深層は別に保存） */
+function loadBestFor(mode: RunMode): number {
+  return mode === "deep" ? loadDeepBest() : loadBestFloor();
+}
+
+function saveBestFor(mode: RunMode, floor: number) {
+  if (mode === "deep") saveDeepBest(floor);
+  else saveBestFloor(floor);
+}
+
+/** デイリーは全員同じ並びにするため、解放で増えるスキルは入れない */
+const UNLOCKABLE_IDS = new Set(UNLOCKS.map((u) => u.skillId));
 
 /** 毎日の挑戦の盤: 日付のたねで地雷を置き、真ん中を開けた状態で始める（全員同じ盤） */
 function makeDailyBoard(
@@ -74,8 +107,8 @@ function createInitialState(
   phase: GamePhase = "playing",
   opts: RunOptions = {},
 ): GameState {
-  const { size, mineCount } = getFloorConfig(1);
   const mode = opts.mode ?? "normal";
+  const { size, mineCount } = floorConfigFor(mode, 1);
   const dateKey = mode === "daily" ? (opts.dateKey ?? localDateKey()) : null;
   const daily = mode === "daily" && dateKey !== null;
   return {
@@ -117,6 +150,15 @@ export default function Page() {
   const [pendingLanterns, setPendingLanterns] = useState(0);
   const [todayKey, setTodayKey] = useState("");
   const [todayDaily, setTodayDaily] = useState<DailyRecord | null>(null);
+  const [deepBest, setDeepBest] = useState(0);
+  const [progress, setProgress] = useState<Progress>({ best: 1, plays: 0 });
+  const runStartProgressRef = useRef<Progress>({ best: 1, plays: 0 });
+  const [runRewards, setRunRewards] = useState<{
+    unlocks: UnlockDef[];
+    titles: TitleDef[];
+  }>({ unlocks: [], titles: [] });
+  /** 深層モードの節目でもう 1 つ取れるスキル */
+  const bonusPickRef = useRef(false);
 
   useEffect(() => {
     // localStorage（外の保存先）から読み込んで画面に反映する。初回の描画は SSR と揃えるため effect で行う
@@ -144,6 +186,8 @@ export default function Page() {
     setPendingLanterns(lanterns);
     setTodayKey(today);
     setTodayDaily(loadDailyRecord(today));
+    setDeepBest(loadDeepBest());
+    setProgress(loadProgress());
   }, []);
 
   // Keep hasSpeedRef in sync for use in the timer effect
@@ -182,6 +226,15 @@ export default function Page() {
       });
       // 保存した回数（localStorage）を読み戻す
       setTotalPlays(loadPlayCount());
+      // ラン同士で残る解放・称号
+      const after = loadProgress();
+      const before = runStartProgressRef.current;
+      setRunRewards({
+        unlocks: newlyUnlocked(before, after),
+        titles: newlyEarnedTitles(before.best, after.best),
+      });
+      setProgress(after);
+      setDeepBest(loadDeepBest());
     }
   }, [
     mounted,
@@ -251,6 +304,17 @@ export default function Page() {
         const clickedCell = board[y][x];
 
         if (clickedCell.isMine) {
+          const hasPhoenix = prev.skills.some(
+            (s) => s.id === "phoenix" && !s.used,
+          );
+          if (hasPhoenix) {
+            const updatedSkills = prev.skills.map((s) =>
+              s.id === "phoenix" && !s.used ? { ...s, used: true } : s,
+            );
+            const flagged = board.map((row) => row.map((c) => ({ ...c })));
+            flagged[y][x].state = "flagged";
+            return { ...prev, board: flagged, firstClick: false, skills: updatedSkills };
+          }
           const hasShield = prev.skills.some(
             (s) => s.id === "shield" && !s.used,
           );
@@ -271,7 +335,7 @@ export default function Page() {
           }
           const newBest = prev.floor > prev.bestFloor;
           if (newBest) {
-            saveBestFloor(prev.floor);
+            saveBestFor(prev.mode, prev.floor);
             setIsNewRecord(true);
           }
           const revealedBoard = board.map((row) =>
@@ -331,18 +395,37 @@ export default function Page() {
     const hasMagnet = state.skills.some((s) => s.id === "magnet");
     const hasLucky = state.skills.some((s) => s.id === "lucky");
     const count = hasMagnet ? 4 : 3;
-    const rand =
-      state.mode === "daily" && state.dateKey
-        ? dailyRandom(state.dateKey, state.floor, "skills")
-        : Math.random;
-    setSkillChoices(getRandomSkillChoices(count, hasLucky, rand));
+    const daily = state.mode === "daily" && state.dateKey !== null;
+    const rand = daily
+      ? dailyRandom(state.dateKey!, state.floor, "skills")
+      : Math.random;
+    const available = daily
+      ? (id: string) => !UNLOCKABLE_IDS.has(id)
+      : (id: string) => isSkillAvailable(id, progress);
+    bonusPickRef.current =
+      state.mode === "deep" && getDeepFloorConfig(state.floor).milestone;
+    setSkillChoices(getRandomSkillChoices(count, hasLucky, rand, available));
     setState((prev) => ({ ...prev, gamePhase: "skillSelect" }));
-  }, [state.floor, state.skills, state.mode, state.dateKey]);
+  }, [state.floor, state.skills, state.mode, state.dateKey, progress]);
 
   const handleSkillSelect = useCallback((skill: Skill) => {
+    // 深層モードの節目: もう 1 つ選べる（同じスキルは選択肢から外す）
+    if (bonusPickRef.current) {
+      bonusPickRef.current = false;
+      setState((prev) => ({
+        ...prev,
+        skills: [...prev.skills, { ...skill, used: false }],
+      }));
+      setSkillChoices(
+        getRandomSkillChoices(3, false, Math.random, (id) =>
+          id !== skill.id && isSkillAvailable(id, progress),
+        ),
+      );
+      return;
+    }
     setState((prev) => {
       const nextFloor = prev.floor + 1;
-      const config = getFloorConfig(nextFloor);
+      const config = floorConfigFor(prev.mode, nextFloor);
       let mineCount = config.mineCount;
       let boardSize = config.size;
       let pendingAutoReveal = 0;
@@ -354,6 +437,7 @@ export default function Page() {
         mineCount = Math.min(mineCount, boardSize * boardSize - 9);
       }
       if (skill.id === "whisper") pendingAutoReveal = 3;
+      if (allSkills.some((s) => s.id === "compass")) pendingAutoReveal += 2;
       mineCount = Math.max(1, mineCount - prev.pendingMineReduction);
       const daily = prev.mode === "daily" && prev.dateKey !== null;
       let board = daily
@@ -379,12 +463,38 @@ export default function Page() {
         lanterns: 0,
       };
     });
-  }, []);
+  }, [progress]);
 
   const handleUseSkill = useCallback((skillId: string) => {
     if (skillId === "xray") {
       setXrayMode((prev) => !prev);
       setActiveSkillId((prev) => (prev === skillId ? undefined : skillId));
+    } else if (skillId === "radar") {
+      setState((prev) => {
+        if (prev.firstClick) return prev;
+        let board = prev.board;
+        for (let i = 0; i < 3; i++) board = applyDetector(board, prev.boardSize);
+        const updatedSkills = prev.skills.map((s) =>
+          s.id === "radar" && !s.used ? { ...s, used: true } : s,
+        );
+        return { ...prev, board, skills: updatedSkills };
+      });
+    } else if (skillId === "candle") {
+      setState((prev) => {
+        if (prev.firstClick) return prev;
+        const [cell] = getAutoRevealCells(prev.board, prev.boardSize, 1);
+        if (!cell) return prev;
+        const board = floodReveal(prev.board, cell[0], cell[1], prev.boardSize);
+        const updatedSkills = prev.skills.map((s) =>
+          s.id === "candle" && !s.used ? { ...s, used: true } : s,
+        );
+        return {
+          ...prev,
+          board,
+          skills: updatedSkills,
+          gamePhase: isCleared(board, prev.boardSize) ? "cleared" : "playing",
+        };
+      });
     } else if (skillId === "detector") {
       setState((prev) => {
         const newBoard = applyDetector(prev.board, prev.boardSize);
@@ -402,24 +512,26 @@ export default function Page() {
     setFlagMode(false);
     setActiveSkillId(undefined);
     gameOverTrackedRef.current = false;
+    bonusPickRef.current = false;
+    runStartProgressRef.current = loadProgress();
+    setRunRewards({ unlocks: [], titles: [] });
   }, []);
 
-  /** ふつうのランを始める。ログイン報酬の灯りがあればこのランで使う */
-  const startNormalRun = useCallback(
-    (source: string) => {
+  /** ふつう／深層のランを始める。ログイン報酬の灯りがあればこのランで使う */
+  const startRun = useCallback(
+    (source: string, mode: "normal" | "deep") => {
       resetTransientState();
-      trackEvent("game_start", { source });
+      trackEvent("game_start", { source, mode });
       const lanterns = loadLanterns();
       saveLanterns(0);
       setPendingLanterns(0);
-      setState((prev) =>
-        createInitialState(prev.bestFloor, "playing", { lanterns }),
-      );
+      setState(createInitialState(loadBestFor(mode), "playing", { lanterns, mode }));
     },
     [resetTransientState],
   );
 
-  const handleStart = useCallback(() => startNormalRun("title"), [startNormalRun]);
+  const handleStart = useCallback(() => startRun("title", "normal"), [startRun]);
+  const handleStartDeep = useCallback(() => startRun("title", "deep"), [startRun]);
 
   const handleStartDaily = useCallback(() => {
     const today = localDateKey();
@@ -427,15 +539,18 @@ export default function Page() {
     resetTransientState();
     trackEvent("game_start", { source: "daily" });
     setTodayKey(today);
-    setState((prev) =>
-      createInitialState(prev.bestFloor, "playing", {
+    setState(
+      createInitialState(loadBestFloor(), "playing", {
         mode: "daily",
         dateKey: today,
       }),
     );
   }, [resetTransientState]);
 
-  const handleRestart = useCallback(() => startNormalRun("restart"), [startNormalRun]);
+  const handleRestart = useCallback(
+    () => startRun("restart", state.mode === "deep" ? "deep" : "normal"),
+    [startRun, state.mode],
+  );
 
   /** 灯り: 安全なマスを 1 つ開ける（最初のフロアだけ） */
   const handleLantern = useCallback(() => {
@@ -463,7 +578,7 @@ export default function Page() {
 
   const handleBackToTitle = useCallback(() => {
     resetTransientState();
-    setState((prev) => createInitialState(prev.bestFloor, "title"));
+    setState(createInitialState(loadBestFloor(), "title"));
     setTotalPlays(loadPlayCount());
     setPendingLanterns(loadLanterns());
     setTodayDaily(loadDailyRecord(localDateKey()));
@@ -473,6 +588,11 @@ export default function Page() {
     setState((prev) => ({ ...prev, gamePhase: "stats" }));
   }, []);
 
+  const handleShowCodex = useCallback(() => {
+    setProgress(loadProgress());
+    setState((prev) => ({ ...prev, gamePhase: "codex" }));
+  }, []);
+
   if (!mounted) {
     return <div className="h-[100dvh] bg-[#0A1628]" />;
   }
@@ -480,7 +600,7 @@ export default function Page() {
   // Title
   if (state.gamePhase === "title") {
     return (
-      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto">
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
         <TitleScreen
           bestFloor={state.bestFloor}
           totalPlays={totalPlays}
@@ -491,10 +611,24 @@ export default function Page() {
           dailyNumber={todayKey ? dailyNumber(todayKey) : 1}
           todayDaily={todayDaily}
           onStartDaily={handleStartDaily}
+          deepUnlocked={state.bestFloor >= DEEP_UNLOCK_FLOOR || deepBest > 0}
+          deepBest={deepBest}
+          onStartDeep={handleStartDeep}
+          onShowCodex={handleShowCodex}
+          bestOverall={progress.best}
         />
         {visit && (
           <WelcomeModal visit={visit} lanterns={pendingLanterns} onClose={() => setVisit(null)} />
         )}
+      </div>
+    );
+  }
+
+  // Codex
+  if (state.gamePhase === "codex") {
+    return (
+      <div className="h-[100dvh] bg-arena text-[#E2E8F0] max-w-sm mx-auto overflow-y-auto">
+        <CodexScreen progress={progress} onBack={handleBackToTitle} />
       </div>
     );
   }
@@ -513,7 +647,7 @@ export default function Page() {
     .flat()
     .filter((c) => c.state === "revealed" && !c.isMine).length;
   const safeTotal = state.boardSize * state.boardSize - state.mineCount;
-  const progress =
+  const boardProgress =
     state.firstClick || safeTotal <= 0 ? 0 : revealedCount / safeTotal;
 
   // Game Over
@@ -531,8 +665,13 @@ export default function Page() {
           dailyLabel={
             state.mode === "daily" && state.dateKey
               ? `デイリー #${dailyNumber(state.dateKey)}`
-              : undefined
+              : state.mode === "deep"
+                ? "深層モード"
+                : undefined
           }
+          isDaily={state.mode === "daily"}
+          newUnlocks={runRewards.unlocks}
+          newTitles={runRewards.titles}
           onRestart={handleRestart}
           onBackToTitle={handleBackToTitle}
         />
@@ -561,7 +700,7 @@ export default function Page() {
         mineCount={state.mineCount}
         flagCount={flagCount}
         timer={state.timer}
-        progress={progress}
+        progress={boardProgress}
       />
       <SkillBar
         skills={state.skills}
@@ -596,6 +735,12 @@ export default function Page() {
               xrayMode={xrayMode}
             />
           </div>
+          {state.mode === "deep" && (
+            <p className="text-xs font-bold text-orange-300 text-center">
+              🌋 深層モード
+              {getDeepFloorConfig(state.floor).milestone && " ・ 節目のフロア（クリアでスキル2つ）"}
+            </p>
+          )}
           {state.mode === "daily" && state.floor === 1 && (
             <p className="text-xs font-bold text-sky-300 text-center">
               📅 デイリー #{dailyNumber(state.dateKey ?? todayKey)} ・ 全員同じ盤
@@ -612,7 +757,7 @@ export default function Page() {
           )}
           {state.firstClick && state.floor === 1 && (
             <p className="text-xs text-[#5B7799] text-center">
-              安全そうなマスをタップして開始 ・ ベスト B{state.bestFloor}F
+              安全そうなマスをタップして開始{state.bestFloor > 0 && ` ・ ベスト B${state.bestFloor}F`}
             </p>
           )}
           <div className="flex items-center justify-center gap-4">
