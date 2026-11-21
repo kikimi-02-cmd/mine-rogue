@@ -4,6 +4,7 @@ import AdUnit from "@/components/AdUnit";
 import type { StreakState } from "@/lib/daily";
 import type { DailyRecord } from "@/lib/storage";
 import { currentTitle, DEEP_UNLOCK_FLOOR } from "@/lib/progress";
+import { IS_DIST } from "@/lib/dist";
 
 interface Props {
   bestFloor: number;
@@ -52,7 +53,7 @@ export default function TitleScreen({
             <span className="text-emerald-400"> ROGUE</span>
           </h1>
           <p className="mt-3 text-sm font-bold tracking-widest text-[#5B7799]">
-            マインスイーパー × ローグライク
+            地雷の盤を潜るローグライク
           </p>
         </div>
 
@@ -147,12 +148,14 @@ export default function TitleScreen({
           >
             📊 統計
           </button>
+          {!IS_DIST && (
           <Link
             href="/how-to-play"
             className="flex-1 rounded-xl border border-[#334155] bg-[#16243A] py-3 text-center text-sm font-bold text-[#E2E8F0] transition-colors hover:bg-[#1E3350]"
           >
             📖 遊び方
           </Link>
+          )}
         </div>
         {totalPlays > 0 && (
           <p className="text-center text-[11px] text-gray-600">

@@ -1,5 +1,6 @@
 import type { Skill } from "./types";
 import { guardShareText } from "./shareGuard";
+import { IS_DIST } from "./dist";
 
 export const SITE_URL = "https://mine-rogue.vercel.app/";
 export const HASHTAGS = ["#MineRogue", "#ブラウザゲーム"];
@@ -29,7 +30,8 @@ export function buildShareText(r: ShareResult): string {
     `スキル: ${icons}`,
     `⏱ ${formatTime(r.timer)}`,
     HASHTAGS.join(" "),
-    SITE_URL,
+    // 配信版では外部へのリンクを入れない
+    ...(IS_DIST ? [] : [SITE_URL]),
   ].join("\n");
 }
 
@@ -151,7 +153,11 @@ export function drawResultCard(canvas: HTMLCanvasElement, r: ShareResult): void 
   ctx.fillRect(0, H - 110, W, 110);
   ctx.font = `900 40px ${FONT}`;
   ctx.fillStyle = "#04261A";
-  ctx.fillText(`${HASHTAGS[0]}   mine-rogue.vercel.app`, W / 2, H - 55);
+  ctx.fillText(
+    IS_DIST ? HASHTAGS[0] : `${HASHTAGS[0]}   mine-rogue.vercel.app`,
+    W / 2,
+    H - 55,
+  );
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
