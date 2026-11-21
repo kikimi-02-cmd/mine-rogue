@@ -103,6 +103,13 @@ export default function TitleScreen({
 
       {/* Actions */}
       <div className="flex w-full max-w-xs flex-col gap-3">
+        <button
+          data-start
+          onClick={onStart}
+          className="animate-cta-pulse w-full rounded-2xl bg-[#10B981] py-5 [@media(max-height:700px)]:py-3 text-2xl font-black tracking-wide text-white transition-colors hover:bg-emerald-400 active:bg-emerald-600"
+        >
+          ゲームスタート
+        </button>
         {invite && (
           invite.record ? (
             <div className="w-full rounded-xl border border-fuchsia-400/40 bg-[#1E1030] py-2.5 text-center text-sm font-bold text-fuchsia-200">
@@ -121,13 +128,6 @@ export default function TitleScreen({
             </button>
           )
         )}
-        <button
-          data-start
-          onClick={onStart}
-          className="animate-cta-pulse w-full rounded-2xl bg-[#10B981] py-5 [@media(max-height:700px)]:py-3 text-2xl font-black tracking-wide text-white transition-colors hover:bg-emerald-400 active:bg-emerald-600"
-        >
-          ゲームスタート
-        </button>
         {todayDaily ? (
           <div className="w-full rounded-xl border border-sky-500/30 bg-[#0F1B2E] py-2.5 text-center text-sm font-bold text-sky-200">
             📅 デイリー #{dailyNumber} 記録 B{todayDaily.floor}F
